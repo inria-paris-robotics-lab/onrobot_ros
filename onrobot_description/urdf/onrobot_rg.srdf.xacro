@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--This does not replace URDF, and is not an extension of URDF.
+    This is a format for representing semantic information about the robot structure.
+    A URDF file must exist for this robot as well, where the joints and the links that are referenced are defined
+-->
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+    <xacro:macro name="onrobot_rg_group" params="model prefix">
+        <xacro:if value="${model == 'rg6_v1'}">
+            <link name="${prefix}_finger_1_safety_shield"/>
+            <link name="${prefix}_finger_2_safety_shield"/>
+        </xacro:if>
+        <link name="${prefix}_bracket"/>
+        <link name="${prefix}_body"/>
+        <link name="${prefix}_finger_1_moment_arm"/>
+        <link name="${prefix}_finger_1_finger_tip"/>
+        <link name="${prefix}_finger_1_flex_finger"/>
+        <link name="${prefix}_finger_1_truss_arm"/>
+        <link name="${prefix}_finger_2_moment_arm"/>
+        <link name="${prefix}_finger_2_finger_tip"/>
+        <link name="${prefix}_finger_2_flex_finger"/>
+        <link name="${prefix}_finger_2_truss_arm"/>
+        <joint name="${prefix}_joint"/>
+        <passive_joint name="${prefix}_mirror_joint"/>
+    </xacro:macro>
+
+    <xacro:macro name="onrobot_rg6_group" params="prefix">
+        <xacro:onrobot_rg_group model="rg6_v1" prefix="${prefix}"/>
+    </xacro:macro>
+    <xacro:macro name="onrobot_rg2_group" params="prefix">
+        <xacro:onrobot_rg_group model="rg2_v1" prefix="${prefix}"/>
+    </xacro:macro>
+
+    <xacro:macro name="onrobot_rg_autocol" params="model prefix">
+        <xacro:if value="${model == 'rg6_v1'}">
+            <disable_collisions link1="${prefix}_finger_1_safety_shield" link2="${prefix}_bracket" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_1_safety_shield" link2="${prefix}_finger_1_moment_arm" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_1_safety_shield" link2="${prefix}_finger_1_finger_tip" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_1_safety_shield" link2="${prefix}_finger_1_flex_finger" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_1_safety_shield" link2="${prefix}_finger_1_truss_arm" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_1_safety_shield" link2="${prefix}_finger_2_moment_arm" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_1_safety_shield" link2="${prefix}_finger_2_finger_tip" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_1_safety_shield" link2="${prefix}_finger_2_flex_finger" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_1_safety_shield" link2="${prefix}_finger_2_truss_arm" reason="Never"/>
+
+            <disable_collisions link1="${prefix}_finger_2_safety_shield" link2="${prefix}_bracket" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_2_safety_shield" link2="${prefix}_finger_1_moment_arm" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_2_safety_shield" link2="${prefix}_finger_1_finger_tip" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_2_safety_shield" link2="${prefix}_finger_1_flex_finger" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_2_safety_shield" link2="${prefix}_finger_1_truss_arm" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_2_safety_shield" link2="${prefix}_finger_2_moment_arm" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_2_safety_shield" link2="${prefix}_finger_2_finger_tip" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_2_safety_shield" link2="${prefix}_finger_2_flex_finger" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_2_safety_shield" link2="${prefix}_finger_2_truss_arm" reason="Never"/>
+        </xacro:if>
+
+        <!-- <disable_collisions link1="${prefix}_bracket" link2="${prefix}_bracket" reason="Never"/> -->
+        <disable_collisions link1="${prefix}_bracket" link2="${prefix}_finger_1_moment_arm" reason="Never"/>
+        <disable_collisions link1="${prefix}_bracket" link2="${prefix}_finger_1_finger_tip" reason="Never"/>
+        <disable_collisions link1="${prefix}_bracket" link2="${prefix}_finger_1_flex_finger" reason="Never"/>
+        <disable_collisions link1="${prefix}_bracket" link2="${prefix}_finger_1_truss_arm" reason="Never"/>
+        <disable_collisions link1="${prefix}_bracket" link2="${prefix}_finger_2_moment_arm" reason="Never"/>
+        <disable_collisions link1="${prefix}_bracket" link2="${prefix}_finger_2_finger_tip" reason="Never"/>
+        <disable_collisions link1="${prefix}_bracket" link2="${prefix}_finger_2_flex_finger" reason="Never"/>
+        <disable_collisions link1="${prefix}_bracket" link2="${prefix}_finger_2_truss_arm" reason="Never"/>
+        <disable_collisions link1="${prefix}_bracket" link2="${prefix}_body" reason="Never"/>
+
+        <!-- <disable_collisions link1="${prefix}_finger_1_moment_arm" link2="${prefix}_bracket" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_1_moment_arm" link2="${prefix}_finger_1_moment_arm" reason="Never"/> -->
+        <disable_collisions link1="${prefix}_finger_1_moment_arm" link2="${prefix}_finger_1_finger_tip" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_1_moment_arm" link2="${prefix}_finger_1_flex_finger" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_1_moment_arm" link2="${prefix}_finger_1_truss_arm" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_1_moment_arm" link2="${prefix}_finger_2_moment_arm" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_1_moment_arm" link2="${prefix}_finger_2_finger_tip" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_1_moment_arm" link2="${prefix}_finger_2_flex_finger" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_1_moment_arm" link2="${prefix}_finger_2_truss_arm" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_1_moment_arm" link2="${prefix}_body" reason="Never"/>
+
+        <!-- <disable_collisions link1="${prefix}_finger_1_finger_tip" link2="${prefix}_bracket" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_1_finger_tip" link2="${prefix}_finger_1_moment_arm" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_1_finger_tip" link2="${prefix}_finger_1_finger_tip" reason="Never"/> -->
+        <disable_collisions link1="${prefix}_finger_1_finger_tip" link2="${prefix}_finger_1_flex_finger" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_1_finger_tip" link2="${prefix}_finger_1_truss_arm" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_1_finger_tip" link2="${prefix}_finger_2_moment_arm" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_1_finger_tip" link2="${prefix}_finger_2_finger_tip" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_1_finger_tip" link2="${prefix}_finger_2_flex_finger" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_1_finger_tip" link2="${prefix}_finger_2_truss_arm" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_1_finger_tip" link2="${prefix}_body" reason="Never"/>
+
+        <!-- <disable_collisions link1="${prefix}_finger_1_flex_finger" link2="${prefix}_bracket" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_1_flex_finger" link2="${prefix}_finger_1_moment_arm" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_1_flex_finger" link2="${prefix}_finger_1_finger_tip" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_1_flex_finger" link2="${prefix}_finger_1_flex_finger" reason="Never"/> -->
+        <disable_collisions link1="${prefix}_finger_1_flex_finger" link2="${prefix}_finger_1_truss_arm" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_1_flex_finger" link2="${prefix}_finger_2_moment_arm" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_1_flex_finger" link2="${prefix}_finger_2_finger_tip" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_1_flex_finger" link2="${prefix}_finger_2_flex_finger" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_1_flex_finger" link2="${prefix}_finger_2_truss_arm" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_1_flex_finger" link2="${prefix}_body" reason="Never"/>
+
+        <!-- <disable_collisions link1="${prefix}_finger_1_truss_arm" link2="${prefix}_bracket" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_1_truss_arm" link2="${prefix}_finger_1_moment_arm" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_1_truss_arm" link2="${prefix}_finger_1_finger_tip" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_1_truss_arm" link2="${prefix}_finger_1_flex_finger" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_1_truss_arm" link2="${prefix}_finger_1_truss_arm" reason="Never"/> -->
+        <disable_collisions link1="${prefix}_finger_1_truss_arm" link2="${prefix}_finger_2_moment_arm" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_1_truss_arm" link2="${prefix}_finger_2_finger_tip" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_1_truss_arm" link2="${prefix}_finger_2_flex_finger" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_1_truss_arm" link2="${prefix}_finger_2_truss_arm" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_1_truss_arm" link2="${prefix}_body" reason="Never"/>
+
+        <!-- <disable_collisions link1="${prefix}_finger_2_moment_arm" link2="${prefix}_bracket" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_2_moment_arm" link2="${prefix}_finger_1_moment_arm" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_2_moment_arm" link2="${prefix}_finger_1_finger_tip" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_2_moment_arm" link2="${prefix}_finger_1_flex_finger" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_2_moment_arm" link2="${prefix}_finger_1_truss_arm" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_2_moment_arm" link2="${prefix}_finger_2_moment_arm" reason="Never"/> -->
+        <disable_collisions link1="${prefix}_finger_2_moment_arm" link2="${prefix}_finger_2_finger_tip" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_2_moment_arm" link2="${prefix}_finger_2_flex_finger" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_2_moment_arm" link2="${prefix}_finger_2_truss_arm" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_2_moment_arm" link2="${prefix}_body" reason="Never"/>
+
+        <!-- <disable_collisions link1="${prefix}_finger_2_finger_tip" link2="${prefix}_bracket" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_2_finger_tip" link2="${prefix}_finger_1_moment_arm" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_2_finger_tip" link2="${prefix}_finger_1_finger_tip" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_2_finger_tip" link2="${prefix}_finger_1_flex_finger" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_2_finger_tip" link2="${prefix}_finger_1_truss_arm" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_2_finger_tip" link2="${prefix}_finger_2_moment_arm" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_2_finger_tip" link2="${prefix}_finger_2_finger_tip" reason="Never"/> -->
+        <disable_collisions link1="${prefix}_finger_2_finger_tip" link2="${prefix}_finger_2_flex_finger" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_2_finger_tip" link2="${prefix}_finger_2_truss_arm" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_2_finger_tip" link2="${prefix}_body" reason="Never"/>
+
+        <!-- <disable_collisions link1="${prefix}_finger_2_flex_finger" link2="${prefix}_bracket" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_2_flex_finger" link2="${prefix}_finger_1_moment_arm" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_2_flex_finger" link2="${prefix}_finger_1_finger_tip" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_2_flex_finger" link2="${prefix}_finger_1_flex_finger" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_2_flex_finger" link2="${prefix}_finger_1_truss_arm" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_2_flex_finger" link2="${prefix}_finger_2_moment_arm" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_2_flex_finger" link2="${prefix}_finger_2_finger_tip" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_2_flex_finger" link2="${prefix}_finger_2_flex_finger" reason="Never"/> -->
+        <disable_collisions link1="${prefix}_finger_2_flex_finger" link2="${prefix}_finger_2_truss_arm" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_2_flex_finger" link2="${prefix}_body" reason="Never"/>
+
+        <!-- <disable_collisions link1="${prefix}_finger_2_truss_arm" link2="${prefix}_bracket" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_2_truss_arm" link2="${prefix}_finger_1_moment_arm" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_2_truss_arm" link2="${prefix}_finger_1_finger_tip" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_2_truss_arm" link2="${prefix}_finger_1_flex_finger" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_2_truss_arm" link2="${prefix}_finger_1_truss_arm" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_2_truss_arm" link2="${prefix}_finger_2_moment_arm" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_2_truss_arm" link2="${prefix}_finger_2_finger_tip" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_2_truss_arm" link2="${prefix}_finger_2_flex_finger" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_finger_2_truss_arm" link2="${prefix}_finger_2_truss_arm" reason="Never"/> -->
+        <disable_collisions link1="${prefix}_finger_2_truss_arm" link2="${prefix}_body" reason="Never"/>
+
+        <!-- <disable_collisions link1="${prefix}_body" link2="${prefix}_bracket" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_body" link2="${prefix}_finger_1_moment_arm" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_body" link2="${prefix}_finger_1_finger_tip" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_body" link2="${prefix}_finger_1_flex_finger" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_body" link2="${prefix}_finger_1_truss_arm" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_body" link2="${prefix}_finger_2_moment_arm" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_body" link2="${prefix}_finger_2_finger_tip" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_body" link2="${prefix}_finger_2_flex_finger" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_body" link2="${prefix}_finger_2_truss_arm" reason="Never"/> -->
+        <!-- <disable_collisions link1="${prefix}_body" link2="${prefix}_body" reason="Never"/> -->
+
+    </xacro:macro>
+
+    <xacro:macro name="onrobot_rg2_autocol" params="prefix">
+        <xacro:onrobot_rg_autocol model="rg2_v1" prefix="${prefix}"/>
+    </xacro:macro>
+    <xacro:macro name="onrobot_rg6_autocol" params="prefix">
+        <xacro:onrobot_rg_autocol model="rg6_v1" prefix="${prefix}"/>
+    </xacro:macro>
+
+
+    <xacro:macro name="onrobot_rg_col_with" params="model prefix link">
+        <xacro:if value="${model == 'rg6_v1'}">
+            <disable_collisions link1="${prefix}_finger_1_safety_shield" link2="${link}" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_2_safety_shield" link2="${link}" reason="Never"/>
+        </xacro:if>
+
+        <disable_collisions link1="${prefix}_bracket" link2="${link}" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_1_moment_arm" link2="${link}" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_1_finger_tip" link2="${link}" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_1_flex_finger" link2="${link}" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_1_truss_arm" link2="${link}" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_2_moment_arm" link2="${link}" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_2_finger_tip" link2="${link}" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_2_flex_finger" link2="${link}" reason="Never"/>
+        <disable_collisions link1="${prefix}_finger_2_truss_arm" link2="${link}" reason="Never"/>
+        <disable_collisions link1="${prefix}_body" link2="${link}" reason="Never"/>
+    </xacro:macro>
+
+    <xacro:macro name="onrobot_rg2_col_with" params="prefix link">
+        <xacro:onrobot_rg_col_with model="rg2_v1" prefix="${prefix}" link="${link}"/>
+    </xacro:macro>
+    <xacro:macro name="onrobot_rg6_col_with" params="prefix link">
+        <xacro:onrobot_rg_col_with model="rg6_v1" prefix="${prefix}" link="${link}"/>
+    </xacro:macro>
+</robot>
