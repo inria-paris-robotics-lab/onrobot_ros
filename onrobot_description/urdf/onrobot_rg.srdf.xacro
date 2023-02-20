@@ -29,6 +29,9 @@
     <xacro:macro name="onrobot_rg2_group" params="prefix">
         <xacro:onrobot_rg_group model="rg2_v1" prefix="${prefix}"/>
     </xacro:macro>
+    <xacro:macro name="onrobot_rg6_v2_group" params="prefix">
+        <xacro:onrobot_rg_group model="rg6_v2" prefix="${prefix}"/>
+    </xacro:macro>
 
     <xacro:macro name="onrobot_rg_autocol" params="model prefix">
         <xacro:if value="${model == 'rg6_v1'}">
@@ -171,7 +174,9 @@
     <xacro:macro name="onrobot_rg6_autocol" params="prefix">
         <xacro:onrobot_rg_autocol model="rg6_v1" prefix="${prefix}"/>
     </xacro:macro>
-
+    <xacro:macro name="onrobot_rg6_v2_autocol" params="prefix">
+        <xacro:onrobot_rg_autocol model="rg6_v2" prefix="${prefix}"/>
+    </xacro:macro>
 
     <xacro:macro name="onrobot_rg_col_with" params="model prefix link">
         <xacro:if value="${model == 'rg6_v1'}">
@@ -196,5 +201,8 @@
     </xacro:macro>
     <xacro:macro name="onrobot_rg6_col_with" params="prefix link">
         <xacro:onrobot_rg_col_with model="rg6_v1" prefix="${prefix}" link="${link}"/>
+    </xacro:macro>
+    <xacro:macro name="onrobot_rg6_v2_col_with" params="prefix link">
+        <xacro:onrobot_rg_col_with model="rg6_v2" prefix="${prefix}" link="${link}"/>
     </xacro:macro>
 </robot>
