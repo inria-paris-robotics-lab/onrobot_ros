@@ -52,8 +52,16 @@ class GripperController:
         Raises:
             ROSException: timeout exception
         """
-        self._set_tool_voltage(24)
-        if not self._wait_for(lambda: self._tool_voltage == 24 and self._ready):
+        self._set_digital_out(16, False) # Always start with open gripper.
+        self._set_tool_voltage(24) # Turn on tool
+        if self._wait_for(lambda: self._tool_voltage == 24 and self._ready):
+            return
+
+        # Switching the pin 16 from High to Low (after power on) is necessary to 'wake up' the RG6-V2 gripper.
+        self._set_digital_out(16, True)
+        self._set_digital_out(16, False)
+        # The timeout is increased so the grippeur has time to open (if needed)
+        if not self._wait_for(lambda: self._tool_voltage == 24 and self._ready, timeout=12.0):
             raise ROSException('Cannot enable the gripper')
 
     def disable(self):
