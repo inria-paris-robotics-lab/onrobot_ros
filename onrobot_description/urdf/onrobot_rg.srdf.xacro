@@ -9,6 +9,10 @@
             <link name="${prefix}_finger_1_safety_shield"/>
             <link name="${prefix}_finger_2_safety_shield"/>
         </xacro:if>
+        <xacro:if value="${model == 'rg6_v2'}">
+            <link name="${prefix}_finger_1_safety_shield"/>
+            <link name="${prefix}_finger_2_safety_shield"/>
+        </xacro:if>
         <link name="${prefix}_bracket"/>
         <link name="${prefix}_body"/>
         <link name="${prefix}_finger_1_moment_arm"/>
@@ -35,6 +39,28 @@
 
     <xacro:macro name="onrobot_rg_autocol" params="model prefix">
         <xacro:if value="${model == 'rg6_v1'}">
+            <disable_collisions link1="${prefix}_finger_1_safety_shield" link2="${prefix}_bracket" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_1_safety_shield" link2="${prefix}_finger_1_moment_arm" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_1_safety_shield" link2="${prefix}_finger_1_finger_tip" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_1_safety_shield" link2="${prefix}_finger_1_flex_finger" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_1_safety_shield" link2="${prefix}_finger_1_truss_arm" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_1_safety_shield" link2="${prefix}_finger_2_moment_arm" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_1_safety_shield" link2="${prefix}_finger_2_finger_tip" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_1_safety_shield" link2="${prefix}_finger_2_flex_finger" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_1_safety_shield" link2="${prefix}_finger_2_truss_arm" reason="Never"/>
+
+            <disable_collisions link1="${prefix}_finger_2_safety_shield" link2="${prefix}_bracket" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_2_safety_shield" link2="${prefix}_finger_1_moment_arm" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_2_safety_shield" link2="${prefix}_finger_1_finger_tip" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_2_safety_shield" link2="${prefix}_finger_1_flex_finger" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_2_safety_shield" link2="${prefix}_finger_1_truss_arm" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_2_safety_shield" link2="${prefix}_finger_2_moment_arm" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_2_safety_shield" link2="${prefix}_finger_2_finger_tip" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_2_safety_shield" link2="${prefix}_finger_2_flex_finger" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_2_safety_shield" link2="${prefix}_finger_2_truss_arm" reason="Never"/>
+        </xacro:if>
+
+        <xacro:if value="${model == 'rg6_v2'}">
             <disable_collisions link1="${prefix}_finger_1_safety_shield" link2="${prefix}_bracket" reason="Never"/>
             <disable_collisions link1="${prefix}_finger_1_safety_shield" link2="${prefix}_finger_1_moment_arm" reason="Never"/>
             <disable_collisions link1="${prefix}_finger_1_safety_shield" link2="${prefix}_finger_1_finger_tip" reason="Never"/>
@@ -180,6 +206,11 @@
 
     <xacro:macro name="onrobot_rg_col_with" params="model prefix link">
         <xacro:if value="${model == 'rg6_v1'}">
+            <disable_collisions link1="${prefix}_finger_1_safety_shield" link2="${link}" reason="Never"/>
+            <disable_collisions link1="${prefix}_finger_2_safety_shield" link2="${link}" reason="Never"/>
+        </xacro:if>
+
+        <xacro:if value="${model == 'rg6_v2'}">
             <disable_collisions link1="${prefix}_finger_1_safety_shield" link2="${link}" reason="Never"/>
             <disable_collisions link1="${prefix}_finger_2_safety_shield" link2="${link}" reason="Never"/>
         </xacro:if>
