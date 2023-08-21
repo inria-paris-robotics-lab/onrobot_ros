@@ -3,9 +3,15 @@
 <launch>
     <arg name="ur_hardware_interface" default="/ur_hardware_interface"/>
     <arg name="joint" default="gripper_joint"/>
-    <arg name="max_position_voltage" default="3.0"/>
     <arg name="state_publish_rate" default="50.0"/>
     <arg name="action_monitor_rate" default="5.0"/>
+    <arg name="gripper_type"/>
+
+    <!-- Set the maximum tool output voltage: "max_position_voltage" -->
+    <arg name="max_position_voltage" value="3.0" if="$(eval gripper_type == 'onrobot-rg2')"/>
+    <arg name="max_position_voltage" value="3.0" if="$(eval gripper_type == 'onrobot-rg6')"/>
+    <arg name="max_position_voltage" value="10.0" if="$(eval gripper_type == 'onrobot-rg6-v2')"/>
+    <!-- Extend this list when adding new onrobot gripper types -->
 
     <node name="gripper_controller" pkg="onrobot_control" type="onrobot_gripper_node.py" output="screen" respawn="true">
         <param name="ur_hardware_interface" type="str" value="$(arg ur_hardware_interface)"/>
