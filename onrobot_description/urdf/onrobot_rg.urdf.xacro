@@ -19,7 +19,7 @@
 
     <!-- load config from file -->
     <xacro:property name="config_file" value="$(find onrobot_description)/config/${model}.yaml"/>
-    <xacro:property name="config" value="${load_yaml(config_file)}"/>
+    <xacro:property name="config" value="${xacro.load_yaml(config_file)}"/>
     <xacro:property name="limit" value="${config['limit']}"/>
     <xacro:property name="origin" value="${config['origin']}"/>
     <xacro:property name="inertial" value="${config['inertial']}"/>
