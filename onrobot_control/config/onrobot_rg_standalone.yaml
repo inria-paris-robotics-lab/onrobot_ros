@@ -1,0 +1,39 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 500  # Hz
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+    
+    rg2_v1_gripper_controller:
+      type: position_controllers/GripperActionController
+
+    rg6_v1_gripper_controller:
+      type: position_controllers/GripperActionController
+    
+    rg6_v2_gripper_controller:
+      type: position_controllers/GripperActionController
+
+rg2_v1_gripper_controller:
+  ros__parameters:
+    action_monitor_rate: 500.0
+    allow_stalling: false
+    goal_tolerance: 0.002
+    joint: rg2_joint
+    max_effort: 0.0
+
+rg6_v1_gripper_controller:
+  ros__parameters:
+    action_monitor_rate: 500.0
+    allow_stalling: false
+    goal_tolerance: 0.002
+    joint: rg6_joint
+    max_effort: 0.0 
+
+rg6_v2_gripper_controller:
+  ros__parameters:
+    action_monitor_rate: 500.0
+    allow_stalling: false
+    goal_tolerance: 0.002
+    joint: rg6_joint
+    max_effort: 0.0

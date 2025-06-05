@@ -4,12 +4,23 @@
   <xacro:include filename="$(find onrobot_description)/urdf/onrobot_rg.urdf.xacro" />
 
   <link name="world" />
+  <xacro:arg name="model" default="rg2_v1" />
+  <xacro:property name="model_prop" value="$(arg model)" />
 
-  <xacro:onrobot_rg parent="world" model='rg2_v1' prefix='rg2'>
-    <origin xyz="0.0 0.05 0.0" rpy="0.0 0.0 0.0" />
-  </xacro:onrobot_rg>
+  <xacro:if value="${model_prop == 'rg2_v1'}">
+    <xacro:onrobot_rg parent="world" model='rg2_v1' prefix='rg2' standalone='true'>
+      <origin xyz="0.0 0.05 0.01" rpy="0.0 0.0 0.0" />
+    </xacro:onrobot_rg>
+  </xacro:if>
+  <xacro:if value="${model_prop == 'rg6_v1'}">
+    <xacro:onrobot_rg parent="world" model='rg6_v1' prefix='rg6' standalone='true'>
+      <origin xyz="0.0 0.05 0.01" rpy="0.0 0.0 0.0" />
+    </xacro:onrobot_rg>
+  </xacro:if>
+  <xacro:if value="${model_prop == 'rg6_v2'}">
+    <xacro:onrobot_rg parent="world" model='rg6_v2' prefix='rg6' standalone='true'>
+      <origin xyz="0.0 0.05 0.01" rpy="0.0 0.0 0.0" />
+    </xacro:onrobot_rg>
+  </xacro:if>
 
-  <xacro:onrobot_rg parent="world" model='rg6_v1' safety_shield='true' prefix='rg6'>
-    <origin xyz="0.0 -0.05 0.0" rpy="0.0 0.0 0.0" />
-  </xacro:onrobot_rg>
 </robot>

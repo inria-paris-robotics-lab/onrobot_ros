@@ -14,8 +14,7 @@
 
   <!-- onrobot gripper -->
   <xacro:macro name="onrobot_rg" params="parent *origin prefix:='gripper'
-    model:='rg2_v1' safety_shield:=False bracket:='single_bracket' mount_angle:=0.0
-    transmission_hw_interface:=hardware_interface/EffortJointInterface">
+    model:='rg2_v1' safety_shield:=False bracket:='single_bracket' mount_angle:=0.0 standalone:=false real_hardware:=false">
 
     <!-- load config from file -->
     <xacro:property name="config_file" value="$(find onrobot_description)/config/${model}.yaml"/>
@@ -46,13 +45,13 @@
     <link name="${prefix}_bracket">
       <visual>
         <geometry>
-          <mesh filename="package://onrobot_description/meshes/${model}/visual/${bracket}.stl"/>
+          <mesh filename="file://$(find onrobot_description)/meshes/${model}/visual/${bracket}.stl"/>
         </geometry>
         <material name="onrobot/grey"/>
       </visual>
       <collision>
         <geometry>
-          <mesh filename="package://onrobot_description/meshes/${model}/collision/${bracket}.stl"/>
+          <mesh filename="file://$(find onrobot_description)/meshes/${model}/collision/${bracket}.stl"/>
         </geometry>
       </collision>
       <xacro:_inertial id="${bracket}"/>
@@ -68,13 +67,13 @@
     <link name="${prefix}_body">
       <visual>
         <geometry>
-          <mesh filename="package://onrobot_description/meshes/${model}/visual/body.stl"/>
+          <mesh filename="file://$(find onrobot_description)/meshes/${model}/visual/body.stl"/>
         </geometry>
         <material name="onrobot/light_grey"/>
       </visual>
       <collision>
         <geometry>
-          <mesh filename="package://onrobot_description/meshes/${model}/collision/body.stl"/>
+          <mesh filename="file://$(find onrobot_description)/meshes/${model}/collision/body.stl"/>
         </geometry>
       </collision>
       <xacro:_inertial id="body"/>
@@ -116,13 +115,13 @@
       <link name="${name}_moment_arm">
         <visual>
           <geometry>
-            <mesh filename="package://onrobot_description/meshes/${model}/visual/moment_arm.stl"/>
+            <mesh filename="file://$(find onrobot_description)/meshes/${model}/visual/moment_arm.stl"/>
           </geometry>
           <material name="onrobot/light_grey"/>
         </visual>
         <collision>
           <geometry>
-            <mesh filename="package://onrobot_description/meshes/${model}/collision/moment_arm.stl"/>
+            <mesh filename="file://$(find onrobot_description)/meshes/${model}/collision/moment_arm.stl"/>
           </geometry>
         </collision>
         <xacro:_inertial id="moment_arm"/>
@@ -144,13 +143,13 @@
       <link name="${name}_truss_arm">
         <visual>
           <geometry>
-            <mesh filename="package://onrobot_description/meshes/${model}/visual/truss_arm.stl"/>
+            <mesh filename="file://$(find onrobot_description)/meshes/${model}/visual/truss_arm.stl"/>
           </geometry>
           <material name="onrobot/light_grey"/>
         </visual>
         <collision>
           <geometry>
-            <mesh filename="package://onrobot_description/meshes/${model}/collision/truss_arm.stl"/>
+            <mesh filename="file://$(find onrobot_description)/meshes/${model}/collision/truss_arm.stl"/>
           </geometry>
         </collision>
         <xacro:_inertial id="truss_arm"/>
@@ -170,13 +169,13 @@
         <link name="${name}_safety_shield">
           <visual>
             <geometry>
-              <mesh filename="package://onrobot_description/meshes/${model}/visual/safety_shield.stl"/>
+              <mesh filename="file://$(find onrobot_description)/meshes/${model}/visual/safety_shield.stl"/>
             </geometry>
             <material name="onrobot/dark_grey"/>
           </visual>
           <collision>
             <geometry>
-              <!-- <mesh filename="package://onrobot_description/meshes/${model}/collision/safety_shield.stl"/> -->
+              <mesh filename="file://$(find onrobot_description)/meshes/${model}/collision/safety_shield.stl"/>
               <box size="0.0 0.0 0.0"/>
             </geometry>
           </collision>
@@ -197,18 +196,18 @@
       <link name="${name}_finger_tip">
         <visual>
           <geometry>
-            <mesh filename="package://onrobot_description/meshes/${model}/visual/finger_tip.stl"/>
+            <mesh filename="file://$(find onrobot_description)/meshes/${model}/visual/finger_tip.stl"/>
           </geometry>
           <material name="onrobot/light_grey"/>
         </visual>
         <collision>
           <geometry>
-            <mesh filename="package://onrobot_description/meshes/${model}/collision/finger_tip_1.stl"/>
+            <mesh filename="file://$(find onrobot_description)/meshes/${model}/collision/finger_tip_1.stl"/>
           </geometry>
         </collision>
         <collision>
           <geometry>
-            <mesh filename="package://onrobot_description/meshes/${model}/collision/finger_tip_2.stl"/>
+            <mesh filename="file://$(find onrobot_description)/meshes/${model}/collision/finger_tip_2.stl"/>
           </geometry>
         </collision>
         <xacro:_inertial id="finger_tip"/>
@@ -227,13 +226,13 @@
       <link name="${name}_flex_finger">
         <visual>
           <geometry>
-            <mesh filename="package://onrobot_description/meshes/${model}/visual/flex_finger.stl"/>
+            <mesh filename="file://$(find onrobot_description)/meshes/${model}/visual/flex_finger.stl"/>
           </geometry>
           <material name="onrobot/dark_grey"/>
         </visual>
         <collision>
           <geometry>
-            <mesh filename="package://onrobot_description/meshes/${model}/collision/flex_finger.stl"/>
+            <mesh filename="file://$(find onrobot_description)/meshes/${model}/collision/flex_finger.stl"/>
           </geometry>
         </collision>
         <xacro:_inertial id="flex_finger"/>
@@ -250,8 +249,46 @@
     <xacro:finger name="${prefix}_finger_1" is_master="true"/>
     <xacro:finger name="${prefix}_finger_2" is_master="false"/>
 
-    <xacro:rg_transmission prefix="${prefix}" hw_interface="${transmission_hw_interface}"/>
-    <xacro:rg_gazebo prefix="${prefix}" origin="${origin}" limit="${limit}" safety_shield="${safety_shield}"/>
+    <ros2_control name="${prefix}" type="system">
+          <hardware>
+              <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+          </hardware>
+          <joint name="${prefix}_joint">
+              <command_interface name="position"/>
+              <state_interface name="position">
+                    <!-- <param name="initial_value">1.</param> -->
+              </state_interface>
+              <state_interface name="velocity"/>
+              <state_interface name="effort"/>
+          </joint>
+          <joint name="${prefix}_finger_1_truss_arm_joint">
+            <state_interface name="position"/>
+          </joint>
+          <joint name="${prefix}_finger_1_finger_tip_joint">
+            <state_interface name="position"/>
+          </joint>
+          <xacro:if value="${safety_shield}">
+            <joint name="${prefix}_finger_1_safety_shield_joint">
+              <state_interface name="position"/>
+            </joint>
+          </xacro:if>
+          
+          <joint name="${prefix}_finger_2_truss_arm_joint">
+            <state_interface name="position"/>
+          </joint>
+          <joint name="${prefix}_finger_2_finger_tip_joint">
+            <state_interface name="position"/>
+          </joint>
+          <xacro:if value="${safety_shield}">
+            <joint name="${prefix}_finger_2_safety_shield_joint">
+              <state_interface name="position"/>
+            </joint>
+          </xacro:if>
+
+    </ros2_control>
+
+    <!-- si standalone alors mettre le plugin de ros2_control -->
+    <xacro:rg_gazebo prefix="${prefix}" origin="${origin}" limit="${limit}" standalone="${standalone}" safety_shield="${safety_shield}"/>
 
   </xacro:macro>
 

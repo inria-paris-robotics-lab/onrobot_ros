@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 
-  <xacro:macro name="rg_gazebo" params="prefix origin limit safety_shield:=False">
+  <xacro:macro name="rg_gazebo" params="prefix origin limit standalone:=True safety_shield:=False">
 
     <!-- load "onrobot_gripper_plugin" plugin -->
-    <gazebo>
+    <!-- <gazebo>
       <plugin name="${prefix}_plugin" filename="libonrobot_gripper_plugin.so">
         <robotNamespace>/${prefix}</robotNamespace>
         <jointName>${prefix}_joint, ${prefix}_mirror_joint</jointName>
@@ -15,7 +15,15 @@
         </xacro:if>
         <maxEffort>0.5</maxEffort>
       </plugin>
-    </gazebo>
+    </gazebo> -->
+    <xacro:if value="${standalone}">
+      <gazebo>
+        <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+            <parameters>$(find onrobot_control)/config/onrobot_rg_standalone.yaml</parameters>
+        </plugin>
+      </gazebo>
+    </xacro:if>
+    
 
     <!-- add close loop joints -->
     <xacro:property name="x" value="${origin['moment_arm']['x']-origin['truss_arm']['x']}"/>
@@ -34,10 +42,10 @@
       </joint>
     </xacro:macro>
 
-    <gazebo>
+    <!-- <gazebo>
       <xacro:close_loop_joint name="${prefix}_finger_1"/>
       <xacro:close_loop_joint name="${prefix}_finger_2"/>
-    </gazebo>
+    </gazebo> -->
 
     <!-- tune tip's friction/collison model -->
     <xacro:macro name="grasp_friction" params="link_name">
