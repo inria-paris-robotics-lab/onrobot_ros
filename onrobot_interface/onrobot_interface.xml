@@ -1,0 +1,9 @@
+<library path="onrobot_interface">
+  <class name="onrobot_interface::OnRobotHardwareInterface"
+         type="onrobot_interface::OnRobotHardwareInterface"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      Hardware interface for the OnRobot RG grippers.
+    </description>
+  </class>
+</library>

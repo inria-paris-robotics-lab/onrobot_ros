@@ -22,7 +22,7 @@ class OnRobotDriver(Node):
         self._script_command_pub = self.create_publisher(String, "/left_urscript_interface/script_command", 10)
         self.enable()
         time.sleep(1.0)  # Wait for the gripper to be ready
-        self.close()  # Start with the gripper closed
+        # self.close()  # Start with the gripper closed
 
     
 
@@ -57,6 +57,7 @@ class OnRobotDriver(Node):
         # The timeout is increased so the grippeur has time to open (if needed)
         if not self._wait_for(lambda: self._tool_voltage == 24 and self._ready, timeout=12.0):
             self.get_logger().error('Failed to enable gripper: tool voltage is not 24V or gripper is not ready.')
+            return
         self.get_logger().info('Gripper enabled successfully.')
 
     def disable(self): #OK
@@ -116,6 +117,7 @@ class OnRobotDriver(Node):
         Raises:
             ROSException: timeout exception
         """
+        self.get_logger().info('Opening gripper...')
         self._move(0, low_force_mode, wait)
 
     def close(self, low_force_mode=False, wait=True): #OK
@@ -128,6 +130,7 @@ class OnRobotDriver(Node):
         Raises:
             ROSException: timeout exception
         """
+        self.get_logger().info('Closing gripper...')
         self._move(1, low_force_mode, wait)
 
     def _move(self, target, low_force_mode=False, wait=True): # OK
@@ -144,7 +147,8 @@ class OnRobotDriver(Node):
         req.pin = pin
         req.state = float(state)
         self.future = self._set_io.call_async(req)
-        rclpy.spin_until_future_complete(self, self.future)
+        print("sending request to set digital out")
+        # rclpy.spin_until_future_complete(self, self.future)
         return self.future.result()
 
     def _tool_data_cb(self, tool_data):#OK
@@ -174,7 +178,7 @@ class OnRobotDriver(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = OnRobotDriver()
+    node = OnRobotDriverTest()
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()

@@ -69,8 +69,8 @@
       </gazebo>
     </xacro:macro>
 
-    <xacro:grasp_friction link_name="${prefix}_finger_1_flex_finger"/>
-    <xacro:grasp_friction link_name="${prefix}_finger_2_flex_finger"/>
+    <!-- <xacro:grasp_friction link_name="${prefix}_finger_1_flex_finger"/> -->
+    <!-- <xacro:grasp_friction link_name="${prefix}_finger_2_flex_finger"/> -->
 
     <!-- enable self collision -->
     <gazebo reference="${prefix}_bracket">

@@ -21,6 +21,7 @@ setup(
     entry_points={
         'console_scripts': [
             'test = onrobot_driver.test:main',
+            'gripper_action_adapter = onrobot_driver.gripper_control_server:main',
 
         ],
     },
