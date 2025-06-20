@@ -291,6 +291,7 @@
             <hardware>
                 <plugin>onrobot_interface::OnRobotHardwareInterface</plugin>
                 <param name="prefix">${prefix}</param>
+                <param name="model">${model}</param>
             </hardware>
             <joint name="${gripper_name}_joint">
                 <command_interface name="position"/>

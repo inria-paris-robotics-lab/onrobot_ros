@@ -16,7 +16,7 @@ OnRobotGripper::OnRobotGripper(const rclcpp::Node::SharedPtr& node, const std::s
     if (model == "rg2_v1") {
         this->_max_position_voltage = 3.0;
     } else if (model == "rg6_v1") {
-        this->_max_position_voltage = 10.0;
+        this->_max_position_voltage = 3.0;
     } else if (model == "rg6_v2") {
         this->_max_position_voltage = 10.0;
     }
@@ -131,11 +131,9 @@ void OnRobotGripper::ioStatesCallback(const ur_msgs::msg::IOStates::SharedPtr io
         }
     }
 
-    // Logique de fin de mouvement : si une commande était en cours et que le gripper
-    // signale qu'il est prêt et dans l'état cible, alors le mouvement est terminé.
     if (this->_command_in_progress && this->_ready && this->_state == this->_target_state) {
         // RCLCPP_INFO(_node->get_logger(), "Mouvement du gripper terminé.");
-        this->_command_in_progress = false; // On peut accepter une nouvelle commande
+        this->_command_in_progress = false; 
     }
 }
 /***
@@ -166,7 +164,6 @@ void OnRobotGripper::enable() {
     this->_set_digital_output(1, 16, 0); // Always start with the pin 16 set to Low
     if (this->_tool_voltage == 24.0 && this->_ready) {
         RCLCPP_INFO(this->_node->get_logger(), "Gripper is already enabled.");
-        this->_command_in_progress = false; // Reset command in progress
     }
     else{
         printf("Setting tool voltage to 24V...\n");
@@ -177,7 +174,6 @@ void OnRobotGripper::enable() {
         std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Wait for 100ms to ensure the gripper is ready 
         this->_set_digital_output(1, 16, 0.); 
         RCLCPP_INFO(this->_node->get_logger(), "Gripper enabled with tool voltage: %.2fV", this->_tool_voltage);
-        this->_command_in_progress = false; // Reset command in progress
     }
 }
 /***
@@ -197,18 +193,29 @@ bool OnRobotGripper::disable() {
  * If a command is already in progress, it logs a warning and returns without moving.
  * It sets the target state and starts the movement by setting the digital outputs accordingly.
  */
-void OnRobotGripper::_move(int target, bool low_force_mode){ // target is 0 for open, 1 for close
-    if (this->_command_in_progress) {
-        RCLCPP_WARN(_node->get_logger(), "Unable to move, a command is already in progress.");
+void OnRobotGripper::_move(int target, bool low_force_mode) {
+    if (_command_in_progress) {
+        // A movement is already in progress, do nothing.
+        RCLCPP_WARN(_node->get_logger(), "MOVE: Command already in progress, ignoring new command.");
         return;
     }
-    // RCLCPP_INFO(_node->get_logger(), "Lancement du mouvement du gripper vers la cible : %d", target);
-    this->_command_in_progress = true; // Verrouille pour de nouvelles commandes
-    this->_target_state = target;
-    this->_ready = false;
 
-    this->_set_digital_output(1, 17, low_force_mode ? 1 : 0);
-    this->_set_digital_output(1, 16, target);
+    // NEW CRUCIAL CHECK:
+    // If the gripper is already in the target state AND it is ready,
+    // there is no reason to send another command.
+    if (_state == target && _ready) {
+        // The gripper is already in the desired state.
+        return;
+    }
+
+    RCLCPP_INFO(_node->get_logger(), "MOVE: Starting movement to target: %d", target);
+    _command_in_progress = true; // Lock to prevent new commands
+    _target_state = target;
+    _ready = false; // Force the internal state to "not ready" to ignore outdated messages.
+
+    // These commands will be sent only once at the beginning of the movement.
+    _set_digital_output(1, 17, low_force_mode ? 1 : 0);
+    _set_digital_output(1, 16, target);
 }
 /**
  * Opens the gripper by moving it to the open state (target 0).

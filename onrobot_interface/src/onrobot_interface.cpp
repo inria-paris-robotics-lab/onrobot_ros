@@ -186,23 +186,29 @@ namespace onrobot_interface
      * @param period the time period since the last write.
      * @return hardware_interface::return_type::OK if write is successful, ERROR otherwise.
      */
-    hardware_interface::return_type OnRobotHardwareInterface::write(const rclcpp::Time & time, const rclcpp::Duration & period)
+    hardware_interface::return_type OnRobotHardwareInterface::write(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
     {
-        // Écrire la commande dans le gripper
-        if (std::abs(hw_position_command_ - hw_position_state_) > 1e-2) {
-            if(gripper_->is_busy()) {
-                // RCLCPP_WARN(rclcpp::get_logger("OnRobotHardwareInterface"), "Gripper is busy, cannot send new command.");
-                // return hardware_interface::return_type::OK;
-            } else {
-                // RCLCPP_INFO(rclcpp::get_logger("OnRobotHardwareInterface"), "Sending command to gripper: %f", hw_position_command_);
-                if (hw_position_command_ > hw_position_state_) {
-                    gripper_->close();
-                } else {
-                    gripper_->open();
-                }
+        // Only send a new command if the gripper is not busy AND the target is not yet reached.
+        if (!gripper_->is_busy() && std::abs(hw_position_command_ - hw_position_state_) > 1e-2)
+        {
+            RCLCPP_INFO(
+                rclcpp::get_logger("OnRobotHardwareInterface"), 
+                "New command required. Target: %.2f, Current: %.2f. Sending to gripper.", 
+                hw_position_command_, hw_position_state_);
+
+            // Determine whether to open or close based on the command direction.
+            if (hw_position_command_ > hw_position_state_)
+            {
+                gripper_->close();
+            }
+            else
+            {
+                gripper_->open();
             }
         }
-        return hardware_interface::return_type::OK;;
+        // If the gripper is busy, we do nothing and wait for the current command to finish.
+
+        return hardware_interface::return_type::OK;
     }
     /***
      * The thread loop for initializing the gripper communication and enabling it.
