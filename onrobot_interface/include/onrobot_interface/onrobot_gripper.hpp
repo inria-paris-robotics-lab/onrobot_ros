@@ -24,7 +24,7 @@ class OnRobotGripper{
     public:
         OnRobotGripper(){};
         ~OnRobotGripper(){};
-        OnRobotGripper(const rclcpp::Node::SharedPtr& node, const std::string prefix);
+        OnRobotGripper(const rclcpp::Node::SharedPtr& node, const std::string prefix, const std::string model);
         void enable();
         bool disable();
         bool isReady();

@@ -8,17 +8,17 @@
   <xacro:property name="model_prop" value="$(arg model)" />
 
   <xacro:if value="${model_prop == 'rg2_v1'}">
-    <xacro:onrobot_rg parent="world" model='rg2_v1' prefix='rg2' standalone='true'>
-      <origin xyz="0.0 0.05 0.01" rpy="3.14 0.0 0.0" />
+    <xacro:onrobot_rg parent="world" model='rg2_v1' prefix='rg2_' standalone='true' real_hardware='false'>
+      <origin xyz="2. 0.05 2." rpy="1.5708 -1.5708 0.0" />
     </xacro:onrobot_rg>
   </xacro:if>
   <xacro:if value="${model_prop == 'rg6_v1'}">
-    <xacro:onrobot_rg parent="world" model='rg6_v1' prefix='rg6' standalone='true'>
+    <xacro:onrobot_rg parent="world" model='rg6' prefix='rg6_' standalone='true' real_hardware='false'>
       <origin xyz="0.0 0.05 0.01" rpy="0.0 0.0 0.0" />
     </xacro:onrobot_rg>
   </xacro:if>
   <xacro:if value="${model_prop == 'rg6_v2'}">
-    <xacro:onrobot_rg parent="world" model='rg6_v2' prefix='rg6' standalone='true'>
+    <xacro:onrobot_rg parent="world" model='rg6_v2' prefix='rg6_v2_' standalone='true' real_hardware='false'>
       <origin xyz="0.0 0.05 0.01" rpy="0.0 0.0 0.0" />
     </xacro:onrobot_rg>
   </xacro:if>

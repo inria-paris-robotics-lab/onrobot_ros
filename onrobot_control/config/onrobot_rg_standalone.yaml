@@ -19,21 +19,21 @@ rg2_v1_gripper_controller:
     action_monitor_rate: 500.0
     allow_stalling: false
     goal_tolerance: 0.002
-    joint: rg2_joint
+    joint: rg2_gripper_joint
     max_effort: 0.0
 
-rg6_v1_gripper_controller:
+rg6_gripper_controller:
   ros__parameters:
     action_monitor_rate: 500.0
     allow_stalling: false
     goal_tolerance: 0.002
-    joint: rg6_joint
-    max_effort: 0.0 
+    joint: rg6_gripper_joint
+    max_effort: 0.0
 
 rg6_v2_gripper_controller:
   ros__parameters:
     action_monitor_rate: 500.0
     allow_stalling: false
     goal_tolerance: 0.002
-    joint: rg6_joint
+    joint: rg6_v2_gripper_joint
     max_effort: 0.0

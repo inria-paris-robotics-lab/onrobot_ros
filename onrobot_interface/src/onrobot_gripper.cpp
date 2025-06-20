@@ -1,7 +1,7 @@
 #include "onrobot_interface/onrobot_gripper.hpp"
 
 
-OnRobotGripper::OnRobotGripper(const rclcpp::Node::SharedPtr& node, const std::string prefix){
+OnRobotGripper::OnRobotGripper(const rclcpp::Node::SharedPtr& node, const std::string prefix, const std::string model){
     this->_node = node;
     this->_prefix = prefix;
 
@@ -13,15 +13,16 @@ OnRobotGripper::OnRobotGripper(const rclcpp::Node::SharedPtr& node, const std::s
     this->_position_voltage = 0.;
     this->_ready = false;
     this->_state = 0; // Current state of the gripper (0 for open, 1 for closed)
-    this->_max_position_voltage = 10.0;  // Max voltage for the position sensor pour le rg2 !!!!!!
+    if (model == "rg2_v1") {
+        this->_max_position_voltage = 3.0;
+    } else if (model == "rg6_v1") {
+        this->_max_position_voltage = 10.0;
+    } else if (model == "rg6_v2") {
+        this->_max_position_voltage = 10.0;
+    }
 
 
     this->_set_io = this->_node->create_client<ur_msgs::srv::SetIO>("/" + this->_prefix + "io_and_status_controller/set_io");
-    // RCLCPP_INFO(this->_node->get_logger(), "Création du client SetIO pour le gripper OnRobot:"+"/" + this->_prefix + "io_and_status_controller/set_io");
-    // if (!this->_set_io->wait_for_service(5s)) {
-    //     RCLCPP_FATAL(this->_node->get_logger(), "Service SetIO non disponible. Impossible d'initialiser le gripper.");
-    //     throw std::runtime_error("SetIO service not available");
-    // }
     this->_states_io_sub = this->_node->create_subscription<ur_msgs::msg::IOStates>(
         "/"+_prefix + "io_and_status_controller/io_states",10,
         std::bind(&OnRobotGripper::ioStatesCallback, this, std::placeholders::_1));
@@ -32,6 +33,13 @@ OnRobotGripper::OnRobotGripper(const rclcpp::Node::SharedPtr& node, const std::s
 
 }
 
+/***
+ * Initializes the communication with the gripper.
+ * This method checks if the SetIO service is ready and waits for it if not.
+ * @return true if the service is ready, false otherwise.
+ * If the service is not available, it logs an error and returns false.
+ * If the service is already ready, it logs an info message and returns true.
+ */
 bool OnRobotGripper::init_communication() {
     // Si c'est déjà initialisé, ne rien faire
     if (this->_set_io->service_is_ready()) {
@@ -47,23 +55,41 @@ bool OnRobotGripper::init_communication() {
     return true;
 }
 
+/***
+ * Checks if the gripper is busy (processing a command).
+ * @return true if the gripper is busy, false otherwise.
+ */
 bool OnRobotGripper::is_busy() const {
     return this->_command_in_progress;
 }
-
+/***
+ * Gets the current position of the gripper.
+ * @return the current position of the gripper as a double.
+ */
 double OnRobotGripper::get_position() const {
     return this->_current_position;
 }
-
+/***
+ * Checks if the gripper is ready to operate.
+ * @return true if the gripper is ready, false otherwise.
+ */
 bool OnRobotGripper::isReady() {
     return _ready;
 }
 
+/***
+ * Checks if the gripper is enabled (i.e., if the tool voltage is above a certain threshold).
+ * @return true if the gripper is enabled, false otherwise.
+ */
 bool OnRobotGripper::is_enabled() const {
     // Le gripper est considéré comme activé si la tension est correcte.
     return this->_tool_voltage > 23.0;
 }
-
+/***
+ * Sets the tool voltage to a specified value.
+ * @param voltage the voltage to set for the tool, must be between 0 and 24V.
+ * If the voltage is out of range, it logs an error and does not send the command.
+ */
 void OnRobotGripper::_set_tool_voltage(float voltage) {
     if (voltage < 0.0 || voltage > 24.0) {
         RCLCPP_ERROR(this->_node->get_logger(), "Tool voltage must be between 0 and 24V");
@@ -71,10 +97,16 @@ void OnRobotGripper::_set_tool_voltage(float voltage) {
     }
     this->_set_digital_output(4, 0, voltage); // the pin is ignored just set fun to 4 to set the voltage
 }
-
+/**
+ * Sets a digital output for the gripper.
+ * @param fun the function to set (1 for digital output, 2 for set flag, 3 for analog output, 4 for tool voltage).
+ * @param pin the pin number to set (16 for gripper control, 17 for gripper state).
+ * @param state the state to set (0 or 1 for digital output, voltage value for tool voltage).
+ * If the SetIO service is not ready, it logs an error and returns.
+ */
 void OnRobotGripper::_set_digital_output(int fun, int pin, float state) {
     if (!this->_set_io->service_is_ready()) {
-        RCLCPP_ERROR(_node->get_logger(), "Impossible d'envoyer la commande, le service SetIO n'est pas prêt.");
+        RCLCPP_ERROR(_node->get_logger(), "Unable to send command, SetIO service is not ready.");
         return;
     }
     auto request = std::make_shared<ur_msgs::srv::SetIO::Request>();
@@ -83,7 +115,12 @@ void OnRobotGripper::_set_digital_output(int fun, int pin, float state) {
     request->state = state;
     this->_set_io->async_send_request(request);
 }
-
+/***
+ * Callback function for IO states. It updates the gripper's state and ready status based on the IO states received.
+ * @param io_states the IO states message containing the digital input states.
+ * It checks pin 16 for the gripper state and pin 17 for the ready state.
+ * If a command was in progress and the gripper is ready and in the target state, it resets the command in progress flag.
+ */
 void OnRobotGripper::ioStatesCallback(const ur_msgs::msg::IOStates::SharedPtr io_states){
     for (const auto& io : io_states->digital_in_states) {
         if (io.pin == 16) { // Pin 16 is used for the gripper
@@ -101,7 +138,12 @@ void OnRobotGripper::ioStatesCallback(const ur_msgs::msg::IOStates::SharedPtr io
         this->_command_in_progress = false; // On peut accepter une nouvelle commande
     }
 }
-
+/***
+ * Callback function for tool data. It updates the tool voltage and position voltage based on the received tool data.
+ * It also calculates the current position of the gripper based on the position voltage.
+ * @param tool_data the tool data message containing the tool output voltage and analog input values.
+ * It scales the position to a range of [0, 1.3] based on the position voltage and max position voltage.
+ */
 void OnRobotGripper::toolDataCallback(const ur_msgs::msg::ToolDataMsg::SharedPtr tool_data) {
     this->_tool_voltage = tool_data->tool_output_voltage; // Update the tool voltage
     this->_position_voltage = tool_data->analog_input2; // Update the position voltage
@@ -112,10 +154,15 @@ void OnRobotGripper::toolDataCallback(const ur_msgs::msg::ToolDataMsg::SharedPtr
         this->_current_position = pourcent_pos * 1.3; // Scale the position to [0, 1.3]
     }
 }
-
+/***
+ * Enables the gripper by setting the tool voltage to 24V and initializing the digital output pins.
+ * It waits for the gripper to be powered up before proceeding.
+ * If the gripper is already enabled, it logs an info message and does not change the state.
+ * If the tool voltage is not 24V, it sets it to 24V and toggles pin 16 to wake up the gripper.
+ */
 void OnRobotGripper::enable() {
     this->_command_in_progress = true; // Reset command in progress
-    RCLCPP_INFO(this->_node->get_logger(), "Activation du gripper OnRobot...");
+    RCLCPP_INFO(this->_node->get_logger(), "Activating OnRobot gripper...");
     this->_set_digital_output(1, 16, 0); // Always start with the pin 16 set to Low
     if (this->_tool_voltage == 24.0 && this->_ready) {
         RCLCPP_INFO(this->_node->get_logger(), "Gripper is already enabled.");
@@ -133,16 +180,26 @@ void OnRobotGripper::enable() {
         this->_command_in_progress = false; // Reset command in progress
     }
 }
-
+/***
+ * Disables the gripper by setting the tool voltage to 0V.
+ * It logs an info message indicating that the command to disable the gripper has been sent.
+ * @return true if the command was sent successfully, false otherwise.
+ */
 bool OnRobotGripper::disable() {
     this->_set_tool_voltage(0.0);
-    RCLCPP_INFO(this->_node->get_logger(), "Commande de désactivation envoyée.");
+    RCLCPP_INFO(this->_node->get_logger(), "Disable command sent.");
     return true;
 }
-
+/***
+ * Moves the gripper to the target state (open or close).
+ * @param target the target state of the gripper (0 for open, 1 for close).
+ * @param low_force_mode if true, uses low force mode for the gripper.
+ * If a command is already in progress, it logs a warning and returns without moving.
+ * It sets the target state and starts the movement by setting the digital outputs accordingly.
+ */
 void OnRobotGripper::_move(int target, bool low_force_mode){ // target is 0 for open, 1 for close
     if (this->_command_in_progress) {
-        RCLCPP_WARN(_node->get_logger(), "Impossible de bouger, un mouvement est déjà en cours.");
+        RCLCPP_WARN(_node->get_logger(), "Unable to move, a command is already in progress.");
         return;
     }
     // RCLCPP_INFO(_node->get_logger(), "Lancement du mouvement du gripper vers la cible : %d", target);
@@ -153,11 +210,19 @@ void OnRobotGripper::_move(int target, bool low_force_mode){ // target is 0 for 
     this->_set_digital_output(1, 17, low_force_mode ? 1 : 0);
     this->_set_digital_output(1, 16, target);
 }
-
+/**
+ * Opens the gripper by moving it to the open state (target 0).
+ * @param low_force_mode if true, uses low force mode for the gripper.
+ * It calls the _move method with target 0 to open the gripper.
+ */
 void OnRobotGripper::open(bool low_force_mode) {
     this->_move(0, low_force_mode); // target 0 for open
 }
-
+/***
+ * Closes the gripper by moving it to the closed state (target 1).
+ * @param low_force_mode if true, uses low force mode for the gripper.
+ * It calls the _move method with target 1 to close the gripper.
+ */
 void OnRobotGripper::close(bool low_force_mode) {
     this->_move(1, low_force_mode); // target 1 for close
 }

@@ -26,7 +26,7 @@ public:
     
         try {
             // C'est maintenant sûr d'appeler shared_from_this() ici !
-            gripper_driver_ = std::make_unique<OnRobotGripper>(this->shared_from_this(), "left_");
+            gripper_driver_ = std::make_unique<OnRobotGripper>(this->shared_from_this(), "right_");
         } catch (const std::runtime_error& e) {
             RCLCPP_FATAL(this->get_logger(), "Échec de l'initialisation du driver: %s", e.what());
             rclcpp::shutdown();

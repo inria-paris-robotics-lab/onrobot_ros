@@ -51,7 +51,7 @@
       </visual>
       <collision>
         <geometry>
-          <mesh filename="file://$(find onrobot_description)/meshes/${model}/collision/${bracket}.stl"/>
+          <mesh filename="file://$(find onrobot_description)/meshes/${model}/visual/${bracket}.stl"/>
         </geometry>
       </collision>
       <xacro:_inertial id="${bracket}"/>
@@ -73,7 +73,7 @@
       </visual>
       <collision>
         <geometry>
-          <mesh filename="file://$(find onrobot_description)/meshes/${model}/collision/body.stl"/>
+          <mesh filename="file://$(find onrobot_description)/meshes/${model}/visual/body.stl"/>
         </geometry>
       </collision>
       <xacro:_inertial id="body"/>
@@ -121,7 +121,7 @@
         </visual>
         <collision>
           <geometry>
-            <mesh filename="file://$(find onrobot_description)/meshes/${model}/collision/moment_arm.stl"/>
+            <mesh filename="file://$(find onrobot_description)/meshes/${model}/visual/moment_arm.stl"/>
           </geometry>
         </collision>
         <xacro:_inertial id="moment_arm"/>
@@ -133,7 +133,7 @@
         <axis xyz="0 1 0"/>
         <xacro:_frame id="moment_arm" rpy="0.0 ${offset} 0.0"/>
         <xacro:_limit/>
-        <!-- <dynamics damping="0.5"/> -->
+        <dynamics damping="0.17"/>
         <xacro:unless value="${is_master}">
           <mimic joint="${gripper_name}_joint" multiplier="1" offset="0"/>
         </xacro:unless>
@@ -149,7 +149,7 @@
         </visual>
         <collision>
           <geometry>
-            <mesh filename="file://$(find onrobot_description)/meshes/${model}/collision/truss_arm.stl"/>
+            <mesh filename="file://$(find onrobot_description)/meshes/${model}/visual/truss_arm.stl"/>
           </geometry>
         </collision>
         <xacro:_inertial id="truss_arm"/>
@@ -175,7 +175,7 @@
           </visual>
           <collision>
             <geometry>
-              <mesh filename="file://$(find onrobot_description)/meshes/${model}/collision/safety_shield.stl"/>
+              <mesh filename="file://$(find onrobot_description)/meshes/${model}/visual/safety_shield.stl"/>
               <box size="0.0 0.0 0.0"/>
             </geometry>
           </collision>
@@ -202,12 +202,12 @@
         </visual>
         <collision>
           <geometry>
-            <mesh filename="file://$(find onrobot_description)/meshes/${model}/collision/finger_tip_1.stl"/>
+            <mesh filename="file://$(find onrobot_description)/meshes/${model}/visual/finger_tip.stl"/>
           </geometry>
         </collision>
         <collision>
           <geometry>
-            <mesh filename="file://$(find onrobot_description)/meshes/${model}/collision/finger_tip_2.stl"/>
+            <mesh filename="file://$(find onrobot_description)/meshes/${model}/visual/finger_tip.stl"/>
           </geometry>
         </collision>
         <xacro:_inertial id="finger_tip"/>
@@ -232,7 +232,7 @@
         </visual>
         <collision>
           <geometry>
-            <mesh filename="file://$(find onrobot_description)/meshes/${model}/collision/flex_finger.stl"/>
+            <mesh filename="file://$(find onrobot_description)/meshes/${model}/visual/flex_finger.stl"/>
           </geometry>
         </collision>
         <xacro:_inertial id="flex_finger"/>

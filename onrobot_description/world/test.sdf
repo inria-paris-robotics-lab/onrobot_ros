@@ -2,17 +2,17 @@
         <sdf version="1.6">
           <world name="rg_test_world">
             <gravity>0 0 -9.81</gravity>
-            <physics name="1ms" type="ignored">
+            <physics name="default" type="ode">
+              <real_time_update_rate>1000</real_time_update_rate>
               <max_step_size>0.001</max_step_size>
-              <real_time_factor>1.0</real_time_factor>
             </physics>
             
             <!-- Plugin system -->
-            <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics">
+            <!-- <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics">
               <engine>
-                <filename>gz-physics-bullet-featherstone-plugin</filename>
+                <filename>gz-physics-dartsim-plugin</filename>
               </engine>
-            </plugin>
+            </plugin> -->
             <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands">
             </plugin>
             <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster">

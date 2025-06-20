@@ -39,6 +39,7 @@ namespace onrobot_interface
         std::unique_ptr<OnRobotGripper> gripper_;
         std::string joint_name_;
         std::string prefix_;
+        std::string model_;
         rclcpp::Node::SharedPtr node_;
         double hw_position_command_ = 0.0; // Commanded position
         double hw_position_state_ = 0.0; // Current position state
