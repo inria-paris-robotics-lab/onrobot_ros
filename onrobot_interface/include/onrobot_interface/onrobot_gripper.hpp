@@ -14,13 +14,18 @@
 #include <ur_msgs/msg/tool_data_msg.hpp>
 #include <std_msgs/msg/string.hpp>
 
-
 #include <functional>
 using namespace std::chrono_literals;
 
 
 
 class OnRobotGripper{
+    float DEFAULT_MAX_POSITION_VOLTAGE_RG2_RG6 = 3.0; // Default max position voltage for RG2/RG6
+    float DEFAULT_MAX_POSITION_VOLTAGE_RG6_V2 = 10.0; // Default max position voltage for RG6 V2
+    float DEFAULT_VOLTAGE = 24.0; // Default voltage for the tool
+    int DEFAULT_STATE = 0; // Default state of the gripper (0 for open, 1 for closed)
+    int PIN_GRIPPER_CONTROL = 16; // Pin used for gripper control
+    int PIN_GRIPPER_STATE = 17; // Pin used for gripper state
     public:
         OnRobotGripper(){};
         ~OnRobotGripper(){};
@@ -47,6 +52,7 @@ class OnRobotGripper{
         float _position_voltage; // Voltage of the position sensor
         bool _ready; // True if the gripper is ready to operate
         int _state; // Current state of the gripper (0 for open, 1 for closed)
+        std::string _model; // Model of the gripper (e.g., "rg2", "rg6", "rg6_v2")
         double _max_position_voltage; // Max voltage for the position sensor
         rclcpp::Client<ur_msgs::srv::SetIO>::SharedPtr _set_io; // Client to set IOs
         rclcpp::Subscription<ur_msgs::msg::IOStates>::SharedPtr _states_io_sub; // Subscription to IO states

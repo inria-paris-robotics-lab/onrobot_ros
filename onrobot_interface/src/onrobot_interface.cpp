@@ -69,6 +69,7 @@ namespace onrobot_interface
         RCLCPP_INFO(rclcpp::get_logger("OnRobotHardwareInterface"), "Création du driver OnRobotGripper avec le préfixe '%s'.", prefix_.c_str());
         is_active_ = false; // Init activation flag
         stop_thread_ = false; // Init stop thread flag
+        is_initialized_ = false; // Set initialized flag
 
         node_executor_ = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
         node_executor_->add_node(node_);
@@ -188,6 +189,11 @@ namespace onrobot_interface
      */
     hardware_interface::return_type OnRobotHardwareInterface::write(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
     {
+
+        if (!is_initialized_ || gripper_->is_busy())
+        {
+            return hardware_interface::return_type::OK;
+        }
         // Only send a new command if the gripper is not busy AND the target is not yet reached.
         if (!gripper_->is_busy() && std::abs(hw_position_command_ - hw_position_state_) > 1e-2)
         {
@@ -206,7 +212,6 @@ namespace onrobot_interface
                 gripper_->open();
             }
         }
-        // If the gripper is busy, we do nothing and wait for the current command to finish.
 
         return hardware_interface::return_type::OK;
     }
@@ -227,7 +232,6 @@ namespace onrobot_interface
             RCLCPP_INFO(node_->get_logger(), "Initialization thread stopped while waiting for the service.");
             return;
         }
-        this->is_active_ = true; // Set the active flag to true
         
         RCLCPP_INFO(node_->get_logger(), "Communication established!");
 
@@ -237,9 +241,10 @@ namespace onrobot_interface
         gripper_->enable();
         std::this_thread::sleep_for(std::chrono::seconds(2));
         RCLCPP_INFO(node_->get_logger(), "Hardware successfully activated!");
+        this->is_active_ = true; // Set the active flag to true
 
-        // Update the shared state so that the control loop can start
-        is_active_ = true;
+        is_initialized_ = true; 
+        RCLCPP_INFO(node_->get_logger(), "Initialization complete. Control loop is now unlocked.");
         return;
     }
 

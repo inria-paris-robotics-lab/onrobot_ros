@@ -4,21 +4,19 @@
 OnRobotGripper::OnRobotGripper(const rclcpp::Node::SharedPtr& node, const std::string prefix, const std::string model){
     this->_node = node;
     this->_prefix = prefix;
+    this->_model = model;
 
     this->_command_in_progress = false;
-    this->_current_position = 0.0; // Current position of the gripper
-    this->_target_state = 0; // Target state of the gripper (0 for open, 1 for closed)
+    this->_target_state = DEFAULT_STATE; // Target state of the gripper (0 for open, 1 for closed)
 
     this->_tool_voltage = 0.0; // Voltage of the tool
     this->_position_voltage = 0.;
     this->_ready = false;
     this->_state = 0; // Current state of the gripper (0 for open, 1 for closed)
-    if (model == "rg2_v1") {
-        this->_max_position_voltage = 3.0;
-    } else if (model == "rg6_v1") {
-        this->_max_position_voltage = 3.0;
-    } else if (model == "rg6_v2") {
-        this->_max_position_voltage = 10.0;
+    if (this->_model == "rg6_v2") {
+        this->_max_position_voltage = DEFAULT_MAX_POSITION_VOLTAGE_RG6_V2;
+    } else{
+        this->_max_position_voltage = DEFAULT_MAX_POSITION_VOLTAGE_RG2_RG6; // Default max position voltage for RG2/RG6
     }
 
 
@@ -91,7 +89,7 @@ bool OnRobotGripper::is_enabled() const {
  * If the voltage is out of range, it logs an error and does not send the command.
  */
 void OnRobotGripper::_set_tool_voltage(float voltage) {
-    if (voltage < 0.0 || voltage > 24.0) {
+    if (voltage < 0.0 || voltage > DEFAULT_VOLTAGE) {
         RCLCPP_ERROR(this->_node->get_logger(), "Tool voltage must be between 0 and 24V");
         return;
     }
@@ -112,7 +110,7 @@ void OnRobotGripper::_set_digital_output(int fun, int pin, float state) {
     auto request = std::make_shared<ur_msgs::srv::SetIO::Request>();
     request->fun = fun;
     request->pin = pin;
-    request->state = state;
+    request->state = int(state);
     this->_set_io->async_send_request(request);
 }
 /***
@@ -123,15 +121,15 @@ void OnRobotGripper::_set_digital_output(int fun, int pin, float state) {
  */
 void OnRobotGripper::ioStatesCallback(const ur_msgs::msg::IOStates::SharedPtr io_states){
     for (const auto& io : io_states->digital_in_states) {
-        if (io.pin == 16) { // Pin 16 is used for the gripper
+        if (io.pin == PIN_GRIPPER_CONTROL) { // Pin 16 is used for the gripper
             this->_state = int(io.state); // Update the ready state based on pin 16
         }
-        else if (io.pin == 17) { // Pin 17 is used for determine the gripper state
-            this->_ready = int(io.state); // Update the gripper state based on pin 17
+        else if (io.pin == PIN_GRIPPER_STATE) { 
+            // this->_ready = int(io.state); // Update the gripper state based on pin 17
         }
     }
 
-    if (this->_command_in_progress && this->_ready && this->_state == this->_target_state) {
+    if (this->_command_in_progress && this->_state == this->_target_state) {
         // RCLCPP_INFO(_node->get_logger(), "Mouvement du gripper terminé.");
         this->_command_in_progress = false; 
     }
@@ -161,20 +159,22 @@ void OnRobotGripper::toolDataCallback(const ur_msgs::msg::ToolDataMsg::SharedPtr
 void OnRobotGripper::enable() {
     this->_command_in_progress = true; // Reset command in progress
     RCLCPP_INFO(this->_node->get_logger(), "Activating OnRobot gripper...");
-    this->_set_digital_output(1, 16, 0); // Always start with the pin 16 set to Low
-    if (this->_tool_voltage == 24.0 && this->_ready) {
+    this->_set_digital_output(1, PIN_GRIPPER_CONTROL, 0); // Always start with the pin 16 set to Low
+    if (this->_tool_voltage >= 23.0) {
         RCLCPP_INFO(this->_node->get_logger(), "Gripper is already enabled.");
     }
     else{
         printf("Setting tool voltage to 24V...\n");
-        this->_set_tool_voltage(24.0); // Set the tool voltage to 10V
-        std::this_thread::sleep_for(std::chrono::seconds(2)); // Wait for 100ms to ensure the gripper is ready 
+        this->_set_tool_voltage(DEFAULT_VOLTAGE); // Set the tool voltage to 10V
+        std::this_thread::sleep_for(std::chrono::seconds(5)); // Wait for 100ms to ensure the gripper is ready 
         // Switching the pin 16 from High to Low (after power on) is necessary to 'wake up' the RG6-V2 gripper.
-        this->_set_digital_output(1, 16, 1.);
-        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Wait for 100ms to ensure the gripper is ready 
-        this->_set_digital_output(1, 16, 0.); 
+        this->_set_digital_output(1, PIN_GRIPPER_CONTROL, 1);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000)); // Wait for 100ms to ensure the gripper is ready 
+        this->_set_digital_output(1, PIN_GRIPPER_CONTROL, 0); 
         RCLCPP_INFO(this->_node->get_logger(), "Gripper enabled with tool voltage: %.2fV", this->_tool_voltage);
     }
+    this->_command_in_progress = false; // Reset command in progress after enabling
+    RCLCPP_INFO(this->_node->get_logger(), "Gripper is now enabled and ready to operate.");
 }
 /***
  * Disables the gripper by setting the tool voltage to 0V.
@@ -200,7 +200,6 @@ void OnRobotGripper::_move(int target, bool low_force_mode) {
         return;
     }
 
-    // NEW CRUCIAL CHECK:
     // If the gripper is already in the target state AND it is ready,
     // there is no reason to send another command.
     if (_state == target && _ready) {
@@ -211,11 +210,11 @@ void OnRobotGripper::_move(int target, bool low_force_mode) {
     RCLCPP_INFO(_node->get_logger(), "MOVE: Starting movement to target: %d", target);
     _command_in_progress = true; // Lock to prevent new commands
     _target_state = target;
-    _ready = false; // Force the internal state to "not ready" to ignore outdated messages.
+    // _ready = false; // Force the internal state to "not ready" to ignore outdated messages.
 
     // These commands will be sent only once at the beginning of the movement.
-    _set_digital_output(1, 17, low_force_mode ? 1 : 0);
-    _set_digital_output(1, 16, target);
+    _set_digital_output(1, PIN_GRIPPER_STATE, low_force_mode ? 1 : 0);
+    _set_digital_output(1, PIN_GRIPPER_CONTROL, target);
 }
 /**
  * Opens the gripper by moving it to the open state (target 0).
