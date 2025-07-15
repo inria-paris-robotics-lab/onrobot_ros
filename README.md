@@ -63,6 +63,22 @@ To use the real gripper:
 
 Refer to the package documentation for detailed integration steps.
 
+Voici une version corrigée et mise en forme en **Markdown**, avec une explication claire en anglais :
+
+````markdown
+## Shutting Down the Real Gripper without Turning Off the UR
+
+When using the real gripper, if you want to shut it down **without shutting down the UR robot itself**, you can use the following ROS 2 service call:
+
+```bash
+ros2 service call /<prefix>io_and_status_controller/set_io ur_msgs/srv/SetIO "{fun: 4, pin: 0, state: 0.0}"
+````
+
+* `fun: 4` means you are setting the **tool power supply** (i.e., controlling the tool output voltage).
+* `pin: 0` corresponds to the **tool output voltage** control pin.
+* `state: 0.0` disables the power supply to the gripper (turns it off).
+
+> Replace `<prefix>` with the appropriate namespace or controller prefix used in your UR setup.
 
 > **Important:**
 > - The project supports grippers connected to a Universal Robot controlled by the [Universal_Robots_ROS2_Driver](https://github.com/UniversalRobots/Universal_Robots_ROS2_Driver).

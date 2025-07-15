@@ -197,10 +197,10 @@ namespace onrobot_interface
         // Only send a new command if the gripper is not busy AND the target is not yet reached.
         if (!gripper_->is_busy() && std::abs(hw_position_command_ - hw_position_state_) > 1e-2)
         {
-            RCLCPP_INFO(
-                rclcpp::get_logger("OnRobotHardwareInterface"), 
-                "New command required. Target: %.2f, Current: %.2f. Sending to gripper.", 
-                hw_position_command_, hw_position_state_);
+            // RCLCPP_INFO(
+            //     rclcpp::get_logger("OnRobotHardwareInterface"), 
+            //     "New command required. Target: %.2f, Current: %.2f. Sending to gripper.", 
+            //     hw_position_command_, hw_position_state_);
 
             // Determine whether to open or close based on the command direction.
             if (hw_position_command_ > hw_position_state_)
