@@ -32,7 +32,6 @@ class OnRobotGripper{
         OnRobotGripper(const rclcpp::Node::SharedPtr& node, const std::string prefix, const std::string model);
         void enable();
         bool disable();
-        bool isReady();
         bool is_enabled() const;
         bool init_communication();
 
@@ -50,7 +49,6 @@ class OnRobotGripper{
         int _target_state; // Target state of the gripper (0 for open, 1 for closed)
         float _tool_voltage; // Voltage of the tool
         float _position_voltage; // Voltage of the position sensor
-        bool _ready; // True if the gripper is ready to operate
         int _state; // Current state of the gripper (0 for open, 1 for closed)
         std::string _model; // Model of the gripper (e.g., "rg2", "rg6", "rg6_v2")
         double _max_position_voltage; // Max voltage for the position sensor

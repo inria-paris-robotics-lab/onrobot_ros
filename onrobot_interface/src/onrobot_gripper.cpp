@@ -11,7 +11,6 @@ OnRobotGripper::OnRobotGripper(const rclcpp::Node::SharedPtr& node, const std::s
 
     this->_tool_voltage = 0.0; // Voltage of the tool
     this->_position_voltage = 0.;
-    this->_ready = false;
     this->_state = 0; // Current state of the gripper (0 for open, 1 for closed)
     if (this->_model == "rg6_v2") {
         this->_max_position_voltage = DEFAULT_MAX_POSITION_VOLTAGE_RG6_V2;
@@ -67,13 +66,6 @@ bool OnRobotGripper::is_busy() const {
 double OnRobotGripper::get_position() const {
     return this->_current_position;
 }
-/***
- * Checks if the gripper is ready to operate.
- * @return true if the gripper is ready, false otherwise.
- */
-bool OnRobotGripper::isReady() {
-    return _ready;
-}
 
 /***
  * Checks if the gripper is enabled (i.e., if the tool voltage is above a certain threshold).
@@ -124,15 +116,7 @@ void OnRobotGripper::ioStatesCallback(const ur_msgs::msg::IOStates::SharedPtr io
         if (io.pin == PIN_GRIPPER_CONTROL) { // Pin 16 is used for the gripper
             this->_state = int(io.state); // Update the ready state based on pin 16
         }
-        else if (io.pin == PIN_GRIPPER_STATE) { 
-            // this->_ready = int(io.state); // Update the gripper state based on pin 17
-        }
     }
-
-    // if (this->_command_in_progress && this->_state == this->_target_state) {
-    //     // RCLCPP_INFO(_node->get_logger(), "Mouvement du gripper terminé.");
-    //     this->_command_in_progress = false; 
-    // }
 }
 /***
  * Callback function for tool data. It updates the tool voltage and position voltage based on the received tool data.
@@ -153,6 +137,11 @@ void OnRobotGripper::toolDataCallback(const ur_msgs::msg::ToolDataMsg::SharedPtr
             }
         }
         this->_current_position = pourcent_pos * 1.3; // Scale the position to [0, 1.3]
+        if (this->_command_in_progress && this->_state == this->_target_state) {
+            if(pourcent_pos <= this->_target_state && pourcent_pos >= this->_target_state - 0.01) { // If the gripper is in the target state with a tolerance of 1%
+                this->_command_in_progress = false;
+            }
+        }
     }
 }
 /***
@@ -207,7 +196,7 @@ void OnRobotGripper::_move(int target, bool low_force_mode) {
 
     // If the gripper is already in the target state AND it is ready,
     // there is no reason to send another command.
-    if (_state == target && _ready) {
+    if (_state == target) {
         // The gripper is already in the desired state.
         return;
     }
@@ -215,7 +204,6 @@ void OnRobotGripper::_move(int target, bool low_force_mode) {
     RCLCPP_INFO(_node->get_logger(), "MOVE: Starting movement to target: %d", target);
     _command_in_progress = true; // Lock to prevent new commands
     _target_state = target;
-    // _ready = false; // Force the internal state to "not ready" to ignore outdated messages.
 
     // These commands will be sent only once at the beginning of the movement.
     _set_digital_output(1, PIN_GRIPPER_STATE, low_force_mode ? 1 : 0);
