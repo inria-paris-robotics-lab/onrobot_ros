@@ -129,10 +129,10 @@ void OnRobotGripper::ioStatesCallback(const ur_msgs::msg::IOStates::SharedPtr io
         }
     }
 
-    if (this->_command_in_progress && this->_state == this->_target_state) {
-        // RCLCPP_INFO(_node->get_logger(), "Mouvement du gripper terminé.");
-        this->_command_in_progress = false; 
-    }
+    // if (this->_command_in_progress && this->_state == this->_target_state) {
+    //     // RCLCPP_INFO(_node->get_logger(), "Mouvement du gripper terminé.");
+    //     this->_command_in_progress = false; 
+    // }
 }
 /***
  * Callback function for tool data. It updates the tool voltage and position voltage based on the received tool data.
@@ -147,6 +147,11 @@ void OnRobotGripper::toolDataCallback(const ur_msgs::msg::ToolDataMsg::SharedPtr
     if (this->_max_position_voltage > 1e-3) {
         float pourcent_pos = std::max(0.0, std::min(1.0, (this->_position_voltage - 0.6) / (this->_max_position_voltage - 0.6))); // 0.6V = pos 1.3, maxV = pos 0
         pourcent_pos = 1.0 - pourcent_pos; // Inverse pour que 0V=max pos, 0.6V=min pos
+        if (this->_command_in_progress && this->_state == this->_target_state){
+            if(pourcent_pos <= this->_target_state && pourcent_pos >= this->_target_state - 0.1) {
+                this->_command_in_progress = false; // Reset command in progress if the position matches the target state
+            }
+        }
         this->_current_position = pourcent_pos * 1.3; // Scale the position to [0, 1.3]
     }
 }
