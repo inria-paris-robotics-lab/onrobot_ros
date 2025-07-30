@@ -6,12 +6,12 @@ OnRobotGripper::OnRobotGripper(const rclcpp::Node::SharedPtr& node, const std::s
     this->_prefix = prefix;
     this->_model = model;
 
-    this->_command_in_progress = false;
-    this->_target_state = DEFAULT_STATE; // Target state of the gripper (0 for open, 1 for closed)
+    this->_command_in_progress.store(false);
+    this->_target_state.store(DEFAULT_STATE); // Target state of the gripper (0 for open, 1 for closed)
 
-    this->_tool_voltage = 0.0; // Voltage of the tool
-    this->_position_voltage = 0.;
-    this->_state = 0; // Current state of the gripper (0 for open, 1 for closed)
+    this->_tool_voltage.store(0.0); // Voltage of the tool
+    this->_position_voltage.store(0.0);
+    this->_state.store(0); // Current state of the gripper (0 for open, 1 for closed)
     if (this->_model == "rg6_v2") {
         this->_max_position_voltage = DEFAULT_MAX_POSITION_VOLTAGE_RG6_V2;
     } else{
@@ -26,7 +26,7 @@ OnRobotGripper::OnRobotGripper(const rclcpp::Node::SharedPtr& node, const std::s
     this->_tool_data_sub = this->_node->create_subscription<ur_msgs::msg::ToolDataMsg>(
         "/"+_prefix + "io_and_status_controller/tool_data", 10,
         std::bind(&OnRobotGripper::toolDataCallback, this, std::placeholders::_1));
-    this->_script_command_pub = this->_node->create_publisher<std_msgs::msg::String>("/"+_prefix + "urscript_interface/script_command", 10);
+    this->_pending_command.store(-1);
 
 }
 
@@ -57,14 +57,14 @@ bool OnRobotGripper::init_communication() {
  * @return true if the gripper is busy, false otherwise.
  */
 bool OnRobotGripper::is_busy() const {
-    return this->_command_in_progress;
+    return this->_command_in_progress.load(); // Check if a command is in progress
 }
 /***
  * Gets the current position of the gripper.
  * @return the current position of the gripper as a double.
  */
 double OnRobotGripper::get_position() const {
-    return this->_current_position;
+    return this->_current_position.load();
 }
 
 /***
@@ -73,7 +73,7 @@ double OnRobotGripper::get_position() const {
  */
 bool OnRobotGripper::is_enabled() const {
     // Le gripper est considéré comme activé si la tension est correcte.
-    return this->_tool_voltage > 23.0;
+    return this->_tool_voltage.load() > 23.0;
 }
 /***
  * Sets the tool voltage to a specified value.
@@ -114,7 +114,7 @@ void OnRobotGripper::_set_digital_output(int fun, int pin, float state) {
 void OnRobotGripper::ioStatesCallback(const ur_msgs::msg::IOStates::SharedPtr io_states){
     for (const auto& io : io_states->digital_in_states) {
         if (io.pin == PIN_GRIPPER_CONTROL) { // Pin 16 is used for the gripper
-            this->_state = int(io.state); // Update the ready state based on pin 16
+            this->_state.store(int(io.state)); // Update the ready state based on pin 16
         }
     }
 }
@@ -125,21 +125,21 @@ void OnRobotGripper::ioStatesCallback(const ur_msgs::msg::IOStates::SharedPtr io
  * It scales the position to a range of [0, 1.3] based on the position voltage and max position voltage.
  */
 void OnRobotGripper::toolDataCallback(const ur_msgs::msg::ToolDataMsg::SharedPtr tool_data) {
-    this->_tool_voltage = tool_data->tool_output_voltage; // Update the tool voltage
-    this->_position_voltage = tool_data->analog_input2; // Update the position voltage
-    // Maj de la pos 
+    this->_tool_voltage.store(tool_data->tool_output_voltage); // Update the tool voltage
+    this->_position_voltage.store(tool_data->analog_input2); // Update the position voltage
+    // Maj de la pos
     if (this->_max_position_voltage > 1e-3) {
         float pourcent_pos = std::max(0.0, std::min(1.0, (this->_position_voltage - 0.6) / (this->_max_position_voltage - 0.6))); // 0.6V = pos 1.3, maxV = pos 0
         pourcent_pos = 1.0 - pourcent_pos; // Inverse pour que 0V=max pos, 0.6V=min pos
-        if (this->_command_in_progress && this->_state == this->_target_state){
-            if(pourcent_pos <= this->_target_state && pourcent_pos >= this->_target_state - 0.1) {
-                this->_command_in_progress = false; // Reset command in progress if the position matches the target state
+        if (this->_command_in_progress.load() && this->_state.load() == this->_target_state.load()) {
+            if(pourcent_pos <= this->_target_state.load() && pourcent_pos >= this->_target_state.load() - 0.1) {
+                this->_command_in_progress.store(false); // Reset command in progress if the position matches the target state
             }
         }
-        this->_current_position = pourcent_pos * 1.3; // Scale the position to [0, 1.3]
-        if (this->_command_in_progress && this->_state == this->_target_state) {
-            if(pourcent_pos <= this->_target_state && pourcent_pos >= this->_target_state - 0.01) { // If the gripper is in the target state with a tolerance of 1%
-                this->_command_in_progress = false;
+        this->_current_position.store(pourcent_pos * 1.3); // Scale the position to [0, 1.3]
+        if (this->_command_in_progress.load() && this->_state.load() == this->_target_state.load()) {
+            if(pourcent_pos <= this->_target_state.load() && pourcent_pos >= this->_target_state.load() - 0.01) { // If the gripper is in the target state with a tolerance of 1%
+                this->_command_in_progress.store(false);
             }
         }
     }
@@ -151,23 +151,36 @@ void OnRobotGripper::toolDataCallback(const ur_msgs::msg::ToolDataMsg::SharedPtr
  * If the tool voltage is not 24V, it sets it to 24V and toggles pin 16 to wake up the gripper.
  */
 void OnRobotGripper::enable() {
-    this->_command_in_progress = true; // Reset command in progress
+    this->_command_in_progress.store(true); // Reset command in progress
     RCLCPP_INFO(this->_node->get_logger(), "Activating OnRobot gripper...");
     this->_set_digital_output(1, PIN_GRIPPER_CONTROL, 0); // Always start with the pin 16 set to Low
-    if (this->_tool_voltage >= 23.0) {
+    
+    if (this->_tool_voltage.load() >= 23.0) {
         RCLCPP_INFO(this->_node->get_logger(), "Gripper is already enabled.");
     }
     else{
         printf("Setting tool voltage to 24V...\n");
         this->_set_tool_voltage(DEFAULT_VOLTAGE); // Set the tool voltage to 10V
-        std::this_thread::sleep_for(std::chrono::seconds(5)); // Wait for 100ms to ensure the gripper is ready 
+
+        // Attendre que le voltage soit bien établi, avec un timeout de 5 secondes.
+        rclcpp::Time start_time = this->_node->get_clock()->now();
+        while (rclcpp::ok() && !this->is_enabled() && (this->_node->get_clock()->now() - start_time) < rclcpp::Duration(5, 0)) {
+            RCLCPP_INFO(this->_node->get_logger(), "Waiting for gripper to power up...");
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        }
+
+        if (!this->is_enabled()) {
+            RCLCPP_ERROR(this->_node->get_logger(), "Gripper failed to power up within 5 seconds.");
+            this->_command_in_progress.store(false);
+            return; // Échec de l'activation
+        }
         // Switching the pin 16 from High to Low (after power on) is necessary to 'wake up' the RG6-V2 gripper.
         this->_set_digital_output(1, PIN_GRIPPER_CONTROL, 1);
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000)); // Wait for 100ms to ensure the gripper is ready 
+        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Wait for 100ms to ensure the gripper is ready 
         this->_set_digital_output(1, PIN_GRIPPER_CONTROL, 0); 
-        RCLCPP_INFO(this->_node->get_logger(), "Gripper enabled with tool voltage: %.2fV", this->_tool_voltage);
+        RCLCPP_INFO(this->_node->get_logger(), "Gripper enabled with tool voltage: %.2fV", this->_tool_voltage.load());
     }
-    this->_command_in_progress = false; // Reset command in progress after enabling
+    this->_command_in_progress.store(false); // Reset command in progress after enabling
     RCLCPP_INFO(this->_node->get_logger(), "Gripper is now enabled and ready to operate.");
 }
 /***
@@ -188,7 +201,7 @@ bool OnRobotGripper::disable() {
  * It sets the target state and starts the movement by setting the digital outputs accordingly.
  */
 void OnRobotGripper::_move(int target, bool low_force_mode) {
-    if (_command_in_progress) {
+    if (this->_command_in_progress.load()) {
         // A movement is already in progress, do nothing.
         RCLCPP_WARN(_node->get_logger(), "MOVE: Command already in progress, ignoring new command.");
         return;
@@ -196,18 +209,18 @@ void OnRobotGripper::_move(int target, bool low_force_mode) {
 
     // If the gripper is already in the target state AND it is ready,
     // there is no reason to send another command.
-    if (_state == target) {
+    if (this->_state.load() == target) {
         // The gripper is already in the desired state.
         return;
     }
 
-    RCLCPP_INFO(_node->get_logger(), "MOVE: Starting movement to target: %d", target);
-    _command_in_progress = true; // Lock to prevent new commands
-    _target_state = target;
+    RCLCPP_INFO(this->_node->get_logger(), "MOVE: Starting movement to target: %d", target);
+    this->_command_in_progress.store(true); // Lock to prevent new commands
+    this->_target_state.store(target);
 
     // These commands will be sent only once at the beginning of the movement.
-    _set_digital_output(1, PIN_GRIPPER_STATE, low_force_mode ? 1 : 0);
-    _set_digital_output(1, PIN_GRIPPER_CONTROL, target);
+    this->_set_digital_output(1, PIN_GRIPPER_STATE, low_force_mode ? 1 : 0);
+    this->_set_digital_output(1, PIN_GRIPPER_CONTROL, target);
 }
 /**
  * Opens the gripper by moving it to the open state (target 0).
@@ -215,7 +228,8 @@ void OnRobotGripper::_move(int target, bool low_force_mode) {
  * It calls the _move method with target 0 to open the gripper.
  */
 void OnRobotGripper::open(bool low_force_mode) {
-    this->_move(0, low_force_mode); // target 0 for open
+    this->_pending_command.store(0);
+    this->_low_force_mode.store(low_force_mode);
 }
 /***
  * Closes the gripper by moving it to the closed state (target 1).
@@ -223,5 +237,31 @@ void OnRobotGripper::open(bool low_force_mode) {
  * It calls the _move method with target 1 to close the gripper.
  */
 void OnRobotGripper::close(bool low_force_mode) {
-    this->_move(1, low_force_mode); // target 1 for close
+    this->_pending_command.store(1);
+    this->_low_force_mode.store(low_force_mode);
+}
+
+void OnRobotGripper::execute_command()
+{
+    // Charger la commande en attente
+    int command = _pending_command.load();
+
+    // S'il n'y a pas de nouvelle commande, ne rien faire
+    if (command == -1) {
+        return;
+    }
+
+    // Récupérer la commande et réinitialiser la boîte aux lettres
+    // L'échange atomique garantit que nous ne traitons la même commande qu'une seule fois
+    command = _pending_command.exchange(-1);
+    if (command == -1) return; // Un autre thread a pu la prendre juste avant
+
+    RCLCPP_INFO(_node->get_logger(), "Executing command: %d", command);
+
+    // Exécuter le mouvement
+    if (command == 1) { // 1 = fermer
+        this->_move(1, false);
+    } else { // 0 = ouvrir
+        this->_move(0, false);
+    }
 }

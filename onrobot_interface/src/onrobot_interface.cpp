@@ -19,6 +19,7 @@ namespace onrobot_interface
         prefix_ = info.hardware_parameters.at("prefix");
         model_ = info.hardware_parameters.at("model");
         // Initialize state and command variables
+        hw_position_command_prev_ = 0.0;
         hw_position_command_ = 0.0;
         hw_position_state_ = 0.0; 
         hw_velocity_state_ = 0.0;
@@ -87,6 +88,7 @@ namespace onrobot_interface
             this->node_executor_->spin();
             RCLCPP_INFO(this->node_->get_logger(), "Stopping spin thread for the gripper interface.");
         });
+        command_timer_ = node_->create_wall_timer(std::chrono::milliseconds(50), [this]() { this->gripper_->execute_command(); });
 
         RCLCPP_INFO(rclcpp::get_logger("OnRobotHardwareInterface"), "Configuration completed successfully.");
         return hardware_interface::CallbackReturn::SUCCESS;
@@ -194,6 +196,10 @@ namespace onrobot_interface
         {
             return hardware_interface::return_type::OK;
         }
+        if (std::abs(hw_position_command_ - hw_position_command_prev_) < 1e-2)
+        {
+            return hardware_interface::return_type::OK;
+        }
         // Only send a new command if the gripper is not busy AND the target is not yet reached.
         if (!gripper_->is_busy() && std::abs(hw_position_command_ - hw_position_state_) > 1e-2)
         {
@@ -211,6 +217,8 @@ namespace onrobot_interface
             {
                 gripper_->open();
             }
+            // Update the previous command to the current command.
+            hw_position_command_prev_ = hw_position_command_;
         }
 
         return hardware_interface::return_type::OK;

@@ -39,17 +39,20 @@ class OnRobotGripper{
         double get_position() const;
         void open(bool low_force_mode=false);
         void close(bool low_force_mode=false);
+        void execute_command();
 
     private:
         // Parameters
-        bool _command_in_progress;
-        double _current_position; // Current position of the gripper
+        std::atomic<int> _pending_command;
+        std::atomic<bool>_low_force_mode; // Low force mode flag
+        std::atomic<bool> _command_in_progress;
+        std::atomic<double> _current_position; // Current position of the gripper
         rclcpp::Node::SharedPtr _node;
         std::string _prefix;
-        int _target_state; // Target state of the gripper (0 for open, 1 for closed)
-        float _tool_voltage; // Voltage of the tool
-        float _position_voltage; // Voltage of the position sensor
-        int _state; // Current state of the gripper (0 for open, 1 for closed)
+        std::atomic<int> _target_state; // Target state of the gripper (0 for open, 1 for closed)
+        std::atomic<double> _tool_voltage; // Voltage of the tool
+        std::atomic<double> _position_voltage; // Voltage of the position sensor
+        std::atomic<int> _state; // Current state of the gripper (0 for open, 1 for closed)
         std::string _model; // Model of the gripper (e.g., "rg2", "rg6", "rg6_v2")
         double _max_position_voltage; // Max voltage for the position sensor
         rclcpp::Client<ur_msgs::srv::SetIO>::SharedPtr _set_io; // Client to set IOs

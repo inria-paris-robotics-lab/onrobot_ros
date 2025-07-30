@@ -41,6 +41,8 @@ namespace onrobot_interface
         std::string prefix_;
         std::string model_;
         rclcpp::Node::SharedPtr node_;
+        rclcpp::TimerBase::SharedPtr command_timer_; // Timer to execute commands periodically
+        double hw_position_command_prev_ = 0.0; 
         double hw_position_command_ = 0.0; // Commanded position
         double hw_position_state_ = 0.0; // Current position state
         double hw_velocity_state_ = 0.0; // Current velocity state
