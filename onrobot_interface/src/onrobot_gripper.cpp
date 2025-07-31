@@ -45,7 +45,7 @@ bool OnRobotGripper::init_communication() {
     }
     // Attendre que le service SetIO soit prêt
     if (!this->_set_io->wait_for_service(1s)) {
-        RCLCPP_FATAL(this->_node->get_logger(), "Service SetIO non disponible. Impossible d'initialiser le gripper.");
+        RCLCPP_WARN(this->_node->get_logger(), "Service SetIO non disponible. Impossible d'initialiser le gripper.");
         return false;
     }
     RCLCPP_INFO(this->_node->get_logger(), "Communication du gripper initialisée avec succès.");
@@ -155,31 +155,29 @@ void OnRobotGripper::enable() {
     RCLCPP_INFO(this->_node->get_logger(), "Activating OnRobot gripper...");
     this->_set_digital_output(1, PIN_GRIPPER_CONTROL, 0); // Always start with the pin 16 set to Low
     
-    if (this->_tool_voltage.load() >= 23.0) {
-        RCLCPP_INFO(this->_node->get_logger(), "Gripper is already enabled.");
-    }
-    else{
+    if (!this->is_enabled()) {
         printf("Setting tool voltage to 24V...\n");
-        this->_set_tool_voltage(DEFAULT_VOLTAGE); // Set the tool voltage to 10V
-
-        // Attendre que le voltage soit bien établi, avec un timeout de 5 secondes.
+        this->_set_tool_voltage(DEFAULT_VOLTAGE); // Set the tool voltage
+        // Wait for the voltage to stabilize, with a timeout of 5 seconds.
         rclcpp::Time start_time = this->_node->get_clock()->now();
         while (rclcpp::ok() && !this->is_enabled() && (this->_node->get_clock()->now() - start_time) < rclcpp::Duration(5, 0)) {
             RCLCPP_INFO(this->_node->get_logger(), "Waiting for gripper to power up...");
             std::this_thread::sleep_for(std::chrono::milliseconds(200));
         }
+        std::this_thread::sleep_for(std::chrono::seconds(5)); // Wait for 5 seconds to ensure the gripper is powered up and booted up
 
-        if (!this->is_enabled()) {
-            RCLCPP_ERROR(this->_node->get_logger(), "Gripper failed to power up within 5 seconds.");
-            this->_command_in_progress.store(false);
-            return; // Échec de l'activation
-        }
-        // Switching the pin 16 from High to Low (after power on) is necessary to 'wake up' the RG6-V2 gripper.
-        this->_set_digital_output(1, PIN_GRIPPER_CONTROL, 1);
-        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Wait for 100ms to ensure the gripper is ready 
-        this->_set_digital_output(1, PIN_GRIPPER_CONTROL, 0); 
-        RCLCPP_INFO(this->_node->get_logger(), "Gripper enabled with tool voltage: %.2fV", this->_tool_voltage.load());
     }
+    else{
+        RCLCPP_INFO(this->_node->get_logger(), "Gripper is already enabled.");
+    }
+
+    // Switching the pin 16 from High to Low (after power on) is necessary to 'wake up' the gripper.
+    RCLCPP_INFO(this->_node->get_logger(), "Performing gripper wake-up sequence...");
+    this->_set_digital_output(1, PIN_GRIPPER_CONTROL, 1);
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000)); // Wait for 100ms to ensure the gripper is ready 
+    this->_set_digital_output(1, PIN_GRIPPER_CONTROL, 0); 
+    RCLCPP_INFO(this->_node->get_logger(), "Gripper enabled with tool voltage: %.2fV", this->_tool_voltage.load());
+
     this->_command_in_progress.store(false); // Reset command in progress after enabling
     RCLCPP_INFO(this->_node->get_logger(), "Gripper is now enabled and ready to operate.");
 }
@@ -207,6 +205,10 @@ void OnRobotGripper::_move(int target, bool low_force_mode) {
         return;
     }
 
+    RCLCPP_INFO(this->_node->get_logger(), "MOVE: Starting movement to target: %d", target);
+    this->_command_in_progress.store(true); // Lock to prevent new commands
+    this->_target_state.store(target);
+
     // If the gripper is already in the target state AND it is ready,
     // there is no reason to send another command.
     if (this->_state.load() == target) {
@@ -214,9 +216,7 @@ void OnRobotGripper::_move(int target, bool low_force_mode) {
         return;
     }
 
-    RCLCPP_INFO(this->_node->get_logger(), "MOVE: Starting movement to target: %d", target);
-    this->_command_in_progress.store(true); // Lock to prevent new commands
-    this->_target_state.store(target);
+    
 
     // These commands will be sent only once at the beginning of the movement.
     this->_set_digital_output(1, PIN_GRIPPER_STATE, low_force_mode ? 1 : 0);
