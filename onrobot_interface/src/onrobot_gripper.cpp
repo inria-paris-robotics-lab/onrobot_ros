@@ -72,7 +72,7 @@ double OnRobotGripper::get_position() const {
  * @return true if the gripper is enabled, false otherwise.
  */
 bool OnRobotGripper::is_enabled() const {
-    // Le gripper est considéré comme activé si la tension est correcte.
+    // The gripper is considered enabled if the voltage is correct.
     return this->_tool_voltage.load() > 23.0;
 }
 /***
@@ -127,7 +127,7 @@ void OnRobotGripper::ioStatesCallback(const ur_msgs::msg::IOStates::SharedPtr io
 void OnRobotGripper::toolDataCallback(const ur_msgs::msg::ToolDataMsg::SharedPtr tool_data) {
     this->_tool_voltage.store(tool_data->tool_output_voltage); // Update the tool voltage
     this->_position_voltage.store(tool_data->analog_input2); // Update the position voltage
-    // Maj de la pos
+    // Position is calculated based on the position voltage and max position voltage
     if (this->_max_position_voltage > 1e-3) {
         float pourcent_pos = std::max(0.0, std::min(1.0, (this->_position_voltage - 0.6) / (this->_max_position_voltage - 0.6))); // 0.6V = pos 1.3, maxV = pos 0
         pourcent_pos = 1.0 - pourcent_pos; // Inverse pour que 0V=max pos, 0.6V=min pos
@@ -243,25 +243,25 @@ void OnRobotGripper::close(bool low_force_mode) {
 
 void OnRobotGripper::execute_command()
 {
-    // Charger la commande en attente
+    // Load the pending command atomically
     int command = _pending_command.load();
 
-    // S'il n'y a pas de nouvelle commande, ne rien faire
+    // If no command is pending, return immediately
     if (command == -1) {
         return;
     }
 
-    // Récupérer la commande et réinitialiser la boîte aux lettres
-    // L'échange atomique garantit que nous ne traitons la même commande qu'une seule fois
+    // Retrieve the command and reset the mailbox
+    // The atomic exchange ensures that we only process the same command once
     command = _pending_command.exchange(-1);
-    if (command == -1) return; // Un autre thread a pu la prendre juste avant
+    if (command == -1) return; // Another thread may have taken it just before
 
     RCLCPP_INFO(_node->get_logger(), "Executing command: %d", command);
 
-    // Exécuter le mouvement
-    if (command == 1) { // 1 = fermer
+    // Execute the movement
+    if (command == 1) { // 1 = close
         this->_move(1, false);
-    } else { // 0 = ouvrir
+    } else { // 0 = open
         this->_move(0, false);
     }
 }

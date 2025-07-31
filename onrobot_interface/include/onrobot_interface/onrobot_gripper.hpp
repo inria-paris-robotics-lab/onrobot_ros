@@ -58,7 +58,6 @@ class OnRobotGripper{
         rclcpp::Client<ur_msgs::srv::SetIO>::SharedPtr _set_io; // Client to set IOs
         rclcpp::Subscription<ur_msgs::msg::IOStates>::SharedPtr _states_io_sub; // Subscription to IO states
         rclcpp::Subscription<ur_msgs::msg::ToolDataMsg>::SharedPtr _tool_data_sub; // Subscription to tool data
-        rclcpp::Publisher<std_msgs::msg::String>::SharedPtr _script_command_pub; // Publisher for script commands
 
         // Methods
         void _set_tool_voltage(float voltage);
