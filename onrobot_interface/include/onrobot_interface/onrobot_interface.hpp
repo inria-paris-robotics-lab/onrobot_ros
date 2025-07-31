@@ -48,7 +48,6 @@ namespace onrobot_interface
         double hw_velocity_state_ = 0.0; // Current velocity state
         double hw_effort_state_ = 0.0; // Current effort state
         std::thread init_thread_;
-        std::atomic<bool> is_active_{false}; // Flag to check if the connection is active
         std::atomic<bool> is_initialized_{false}; // Flag to check if the interface is initialized
         std::atomic<bool> stop_thread_{false}; // Flag to check if the interface is configured
 
