@@ -19,6 +19,7 @@ namespace onrobot_interface
         prefix_ = info.hardware_parameters.at("prefix");
         model_ = info.hardware_parameters.at("model");
         // Initialize state and command variables
+        hw_position_command_prev_ = 0.0;
         hw_position_command_ = 0.0;
         hw_position_state_ = 0.0; 
         hw_velocity_state_ = 0.0;
@@ -64,10 +65,9 @@ namespace onrobot_interface
     {
         RCLCPP_INFO(rclcpp::get_logger("OnRobotHardwareInterface"), "Configuration...");
         // Create the node and the driver
-        node_ = rclcpp::Node::make_shared("onrobot_gripper_hw_interface_node");
+        node_ = rclcpp::Node::make_shared(prefix_ + "onrobot_gripper_hw_interface_node");
         gripper_ = std::make_unique<OnRobotGripper>(node_, prefix_, model_);
         RCLCPP_INFO(rclcpp::get_logger("OnRobotHardwareInterface"), "Création du driver OnRobotGripper avec le préfixe '%s'.", prefix_.c_str());
-        is_active_ = false; // Init activation flag
         stop_thread_ = false; // Init stop thread flag
         is_initialized_ = false; // Set initialized flag
 
@@ -77,16 +77,10 @@ namespace onrobot_interface
         // Start a thread that only "spins" this executor to allow the gripper node to process callbacks.
         node_thread_ = std::thread([this]() {
             RCLCPP_INFO(this->node_->get_logger(), "Starting spin thread for the gripper interface.");
-            while (!is_active_ && !stop_thread_) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Wait for the gripper to be active
-            }
-            if (stop_thread_) {
-                RCLCPP_INFO(this->node_->get_logger(), "Spin thread stopped before gripper activation.");
-                return;
-            }
             this->node_executor_->spin();
             RCLCPP_INFO(this->node_->get_logger(), "Stopping spin thread for the gripper interface.");
         });
+        command_timer_ = node_->create_wall_timer(std::chrono::milliseconds(50), [this]() { this->gripper_->execute_command(); });
 
         RCLCPP_INFO(rclcpp::get_logger("OnRobotHardwareInterface"), "Configuration completed successfully.");
         return hardware_interface::CallbackReturn::SUCCESS;
@@ -194,31 +188,27 @@ namespace onrobot_interface
         {
             return hardware_interface::return_type::OK;
         }
-        // Only send a new command if the gripper is not busy AND the target is not yet reached.
-        if (!gripper_->is_busy() && std::abs(hw_position_command_ - hw_position_state_) > 1e-2)
+        if (std::abs(hw_position_command_ - hw_position_command_prev_) < 1e-2)
         {
-            // RCLCPP_INFO(
-            //     rclcpp::get_logger("OnRobotHardwareInterface"), 
-            //     "New command required. Target: %.2f, Current: %.2f. Sending to gripper.", 
-            //     hw_position_command_, hw_position_state_);
-
-            // Determine whether to open or close based on the command direction.
-            if (hw_position_command_ > hw_position_state_)
-            {
-                gripper_->close();
-            }
-            else
-            {
-                gripper_->open();
-            }
+            return hardware_interface::return_type::OK;
         }
+
+        if (hw_position_command_ > hw_position_state_)
+        {
+            gripper_->close();
+        }
+        else
+        {
+            gripper_->open();
+        }
+        hw_position_command_prev_ = hw_position_command_;
 
         return hardware_interface::return_type::OK;
     }
     /***
      * The thread loop for initializing the gripper communication and enabling it.
      * This method runs in a separate thread and waits until the communication is established.
-     * It then enables the gripper and updates the shared state to indicate that the gripper is active.
+     * It then enables the gripper and updates the shared state 
     */
     void OnRobotHardwareInterface::_init_thread_loop()
     {
@@ -241,8 +231,6 @@ namespace onrobot_interface
         gripper_->enable();
         std::this_thread::sleep_for(std::chrono::seconds(2));
         RCLCPP_INFO(node_->get_logger(), "Hardware successfully activated!");
-        this->is_active_ = true; // Set the active flag to true
-
         is_initialized_ = true; 
         RCLCPP_INFO(node_->get_logger(), "Initialization complete. Control loop is now unlocked.");
         return;

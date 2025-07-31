@@ -41,12 +41,13 @@ namespace onrobot_interface
         std::string prefix_;
         std::string model_;
         rclcpp::Node::SharedPtr node_;
+        rclcpp::TimerBase::SharedPtr command_timer_; // Timer to execute commands periodically
+        double hw_position_command_prev_ = 0.0; 
         double hw_position_command_ = 0.0; // Commanded position
         double hw_position_state_ = 0.0; // Current position state
         double hw_velocity_state_ = 0.0; // Current velocity state
         double hw_effort_state_ = 0.0; // Current effort state
         std::thread init_thread_;
-        std::atomic<bool> is_active_{false}; // Flag to check if the connection is active
         std::atomic<bool> is_initialized_{false}; // Flag to check if the interface is initialized
         std::atomic<bool> stop_thread_{false}; // Flag to check if the interface is configured
 
