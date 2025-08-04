@@ -27,6 +27,8 @@ OnRobotGripper::OnRobotGripper(const rclcpp::Node::SharedPtr& node, const std::s
         "/"+_prefix + "io_and_status_controller/tool_data", 10,
         std::bind(&OnRobotGripper::toolDataCallback, this, std::placeholders::_1));
     this->_pending_command.store(-1);
+    this->_last_known_position.store(0.0);
+    this->_last_position_change_time = this->_node->get_clock()->now();
 
 }
 
@@ -131,17 +133,31 @@ void OnRobotGripper::toolDataCallback(const ur_msgs::msg::ToolDataMsg::SharedPtr
     if (this->_max_position_voltage > 1e-3) {
         float pourcent_pos = std::max(0.0, std::min(1.0, (this->_position_voltage - 0.6) / (this->_max_position_voltage - 0.6))); // 0.6V = pos 1.3, maxV = pos 0
         pourcent_pos = 1.0 - pourcent_pos; // Inverse pour que 0V=max pos, 0.6V=min pos
-        if (this->_command_in_progress.load() && this->_state.load() == this->_target_state.load()) {
-            if(pourcent_pos <= this->_target_state.load() && pourcent_pos >= this->_target_state.load() - 0.1) {
-                this->_command_in_progress.store(false); // Reset command in progress if the position matches the target state
-            }
-        }
         this->_current_position.store(pourcent_pos * 1.3); // Scale the position to [0, 1.3]
+        bool movement_finished = false; // Flag to check if the movement is finished
+        // Condition 1 target pos reached
         if (this->_command_in_progress.load() && this->_state.load() == this->_target_state.load()) {
-            if(pourcent_pos <= this->_target_state.load() && pourcent_pos >= this->_target_state.load() - 0.01) { // If the gripper is in the target state with a tolerance of 1%
-                this->_command_in_progress.store(false);
+            if(std::abs(pourcent_pos - this->_target_state.load()) < 0.02) { // If the gripper is in the target state with a tolerance of 2%
+                movement_finished = true;
             }
         }
+        // Condition 2 Gripper stalled
+        const double SIGNIFICANT_POSITION_CHANGE = 0.01; // Changement of 1%
+        const rclcpp::Duration STALL_TIMEOUT = rclcpp::Duration(5, 0); // 5 seconds the gripper should have finished moving in this time
+
+        if (std::abs(this->_current_position.load() - this->_last_known_position.load()) > SIGNIFICANT_POSITION_CHANGE) {
+            // The gripper is still moving, update the time and position
+            this->_last_position_change_time = this->_node->get_clock()->now();
+            this->_last_known_position.store(this->_current_position.load());
+        } else {
+            // La position n'a pas changé de manière significative. Vérifions si le timeout est dépassé.
+            if ((this->_node->get_clock()->now() - this->_last_position_change_time) > STALL_TIMEOUT) {
+                RCLCPP_INFO(_node->get_logger(), "Mouvement terminé : pince bloquée (objet saisi ou limite physique).");
+                movement_finished = true;
+            }
+        }
+        // If the movement is finished, reset the command in progress flag
+        this->_command_in_progress.store(!movement_finished);
     }
 }
 /***
@@ -208,6 +224,9 @@ void OnRobotGripper::_move(int target, bool low_force_mode) {
     RCLCPP_INFO(this->_node->get_logger(), "MOVE: Starting movement to target: %d", target);
     this->_command_in_progress.store(true); // Lock to prevent new commands
     this->_target_state.store(target);
+
+    this->_last_position_change_time = this->_node->get_clock()->now();
+    this->_last_known_position.store(this->_current_position.load());
 
     // If the gripper is already in the target state AND it is ready,
     // there is no reason to send another command.

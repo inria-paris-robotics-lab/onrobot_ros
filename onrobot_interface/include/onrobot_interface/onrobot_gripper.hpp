@@ -47,6 +47,8 @@ class OnRobotGripper{
         std::atomic<bool>_low_force_mode; // Low force mode flag
         std::atomic<bool> _command_in_progress;
         std::atomic<double> _current_position; // Current position of the gripper
+        std::atomic<double> _last_known_position;
+        rclcpp::Time _last_position_change_time;
         rclcpp::Node::SharedPtr _node;
         std::string _prefix;
         std::atomic<int> _target_state; // Target state of the gripper (0 for open, 1 for closed)
