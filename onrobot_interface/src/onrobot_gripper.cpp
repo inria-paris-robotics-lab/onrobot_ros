@@ -279,8 +279,8 @@ void OnRobotGripper::execute_command()
 
     // Execute the movement
     if (command == 1) { // 1 = close
-        this->_move(1, false);
+        this->_move(1,  this->_low_force_mode.load());
     } else { // 0 = open
-        this->_move(0, false);
+        this->_move(0, this->_low_force_mode.load());
     }
 }
