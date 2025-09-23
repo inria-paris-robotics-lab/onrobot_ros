@@ -143,7 +143,7 @@ void OnRobotGripper::toolDataCallback(const ur_msgs::msg::ToolDataMsg::SharedPtr
         }
         // Condition 2 Gripper stalled
         const double SIGNIFICANT_POSITION_CHANGE = 0.01; // Changement of 1%
-        const rclcpp::Duration STALL_TIMEOUT = rclcpp::Duration(5, 0); // 5 seconds the gripper should have finished moving in this time
+        const rclcpp::Duration STALL_TIMEOUT = rclcpp::Duration(1, 0); // 5 seconds the gripper should have finished moving in this time
 
         if (std::abs(this->_current_position.load() - this->_last_known_position.load()) > SIGNIFICANT_POSITION_CHANGE) {
             // The gripper is still moving, update the time and position
@@ -152,7 +152,6 @@ void OnRobotGripper::toolDataCallback(const ur_msgs::msg::ToolDataMsg::SharedPtr
         } else {
             // La position n'a pas changé de manière significative. Vérifions si le timeout est dépassé.
             if ((this->_node->get_clock()->now() - this->_last_position_change_time) > STALL_TIMEOUT) {
-                RCLCPP_INFO(_node->get_logger(), "Mouvement terminé : pince bloquée (objet saisi ou limite physique).");
                 movement_finished = true;
             }
         }
