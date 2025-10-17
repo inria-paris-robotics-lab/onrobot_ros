@@ -3,6 +3,7 @@ from launch_ros.actions import Node
 from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch_ros.substitutions import FindPackageShare
+from launch_ros.parameter_descriptions import ParameterValue
 
 def lauch_setup(context):
     model = LaunchConfiguration('model')
@@ -22,7 +23,8 @@ def lauch_setup(context):
         ]
     )
 
-    robot_description = {"robot_description": robot_description_content}
+    robot_description = {'robot_description':  ParameterValue(value=robot_description_content, value_type=str)}
+
 
     # Robot state publisher
     node_robot_state_publisher = Node(

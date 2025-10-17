@@ -1,94 +1,91 @@
-<?xml version="1.0"?>
-        <sdf version="1.6">
-          <world name="rg_test_world">
-            <gravity>0 0 -9.81</gravity>
-            <physics name="default" type="ode">
-              <real_time_update_rate>1000</real_time_update_rate>
-              <max_step_size>0.001</max_step_size>
-            </physics>
-            
-            <!-- Plugin system -->
-            <!-- <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics">
-              <engine>
-                <filename>gz-physics-dartsim-plugin</filename>
-              </engine>
-            </plugin> -->
-            <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands">
-            </plugin>
-            <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster">
-            </plugin>
-            <plugin filename="gz-sim-contact-system" name="gz::sim::systems::Contact">
-            </plugin>
+<?xml version="1.0" ?>
+<sdf version="1.9">
+    <world name="paragrip_robot_mdam">
+        <physics name="1ms" type="ignore">
+          <max_step_size>0.001</max_step_size>
+          <real_time_factor>1.0</real_time_factor>
+          <dart>
+            <solver>
+              <!-- <solver_type>dantzig</solver_type>  -->
+              <solver_type>pgs</solver_type>
+            </solver>
+            <!-- <collision_detector>bullet</collision_detector> -->
+            <!-- <collision_detector>dart</collision_detector> -->
+            <!-- <collision_detector>fcl</collision_detector> -->
+            <collision_detector>ode</collision_detector>
+          </dart>
+          <bullet>
+            <solver>
+              <type>sequential_impulse</type>
+              <min_step_size>0.0001</min_step_size>
+              <iters>50</iters>
+              <sor>1.3</sor>
+            </solver>
+            <constraints>
+              <cfm>0.2</cfm>
+              <contact_surface_layer>0.01</contact_surface_layer>
+              <split_impulse>1</split_impulse>
+              <split_impulse_penetration_threshold>-0.01</split_impulse_penetration_threshold>
+            </constraints>
+          </bullet>
+        </physics>
+        <plugin name="gz::sim::systems::Physics"
+          filename="gz-sim-physics-system">
+          <engine>
+            <!-- <filename>gz-physics-dartsim-plugin</filename> -->
+            <!-- <filename>gz-physics-bullet-plugin</filename> -->
+            <filename>gz-physics-bullet-featherstone-plugin</filename>
+          </engine>
+        </plugin>
+        <plugin
+            filename="gz-sim-user-commands-system"
+            name="gz::sim::systems::UserCommands">
+        </plugin>
+        <plugin
+            filename="gz-sim-scene-broadcaster-system"
+            name="gz::sim::systems::SceneBroadcaster">
+        </plugin>
 
-            <!-- Plugin camera -->
-            <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
-              <render_engine>ogre2</render_engine>
-            </plugin>
-        
-            <light type="directional" name="sun">
-              <cast_shadows>true</cast_shadows>
-              <visual>false</visual>
-              <pose>0 0 100 0 0 0</pose>
-              <diffuse>0.8 0.8 0.8 1</diffuse>
-              <specular>0.2 0.2 0.2 1</specular>
-              <attenuation>
+        <light type="directional" name="sun">
+            <cast_shadows>true</cast_shadows>
+            <pose>0 0 10 0 0 0</pose>
+            <diffuse>0.8 0.8 0.8 1</diffuse>
+            <specular>0.2 0.2 0.2 1</specular>
+            <attenuation>
                 <range>1000</range>
                 <constant>0.9</constant>
                 <linear>0.01</linear>
                 <quadratic>0.001</quadratic>
-              </attenuation>
-              <direction>-0.5 0.1 -0.9</direction>
-            </light>
-        
-            <model name='ground_plane'>
-              <static>true</static>
-              <link name='link'>
-                <collision name='collision'>
-                  <geometry>
-                    <plane>
-                      <normal>0 0 1</normal>
-                      <size>100 100</size>
-                    </plane>
-                  </geometry>
-                  <surface>
-                    <friction>
-                      <ode />
-                    </friction>
-                    <bounce />
-                    <contact />
-                  </surface>
+            </attenuation>
+            <direction>-0.5 0.1 -0.9</direction>
+        </light>
+
+        <model name="ground_plane">
+            <static>true</static>
+            <link name="link">
+                <!--<pose relative_to='__model__'>0 0 0 0 0 0</pose>-->
+                <collision name="collision">
+                    <geometry>
+                        <plane>
+                            <normal>0 0 1</normal>
+                        </plane>
+                    </geometry>
                 </collision>
-                <visual name='visual'>
-                  <geometry>
-                    <plane>
-                      <normal>0 0 1</normal>
-                      <size>100 100</size>
-                    </plane>
-                  </geometry>
-                  <material>
-                    <ambient>0.8 0.8 0.8 1</ambient>
-                    <diffuse>0.8 0.8 0.8 1</diffuse>
-                    <specular>0.8 0.8 0.8 1</specular>
-                  </material>
+                <visual name="visual">
+                    <geometry>
+                        <plane>
+                            <normal>0 0 1</normal>
+                            <size>100 100</size>
+                        </plane>
+                    </geometry>
+                    <material>
+                        <ambient>0.8 0.8 0.8 1</ambient>
+                        <diffuse>0.8 0.8 0.8 1</diffuse>
+                        <specular>0.8 0.8 0.8 1</specular>
+                    </material>
                 </visual>
-                <pose>0 0 0 0 -0 0</pose>
-                <inertial>
-                  <pose>0 0 0 0 -0 0</pose>
-                  <mass>1</mass>
-                  <inertia>
-                    <ixx>1</ixx>
-                    <ixy>0</ixy>
-                    <ixz>0</ixz>
-                    <iyy>1</iyy>
-                    <iyz>0</iyz>
-                    <izz>1</izz>
-                  </inertia>
-                </inertial>
-                <enable_wind>false</enable_wind>
-              </link>
-              <pose>0 0 0 0 -0 0</pose>
-              <self_collide>true</self_collide>
-            </model>
-        
-          </world>
-        </sdf>
+            </link>
+        </model>
+
+    </world>
+</sdf>

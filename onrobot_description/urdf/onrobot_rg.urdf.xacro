@@ -131,7 +131,7 @@
         <parent link="${name}_origin"/>
         <child link = "${name}_moment_arm"/>
         <axis xyz="0 1 0"/>
-        <xacro:_frame id="moment_arm" rpy="0.0 ${offset} 0.0"/>
+        <xacro:_frame id="moment_arm" rpy="0.0 ${offset-0.01} 0.0"/>
         <xacro:_limit/>
         <dynamics damping="0.17"/>
         <xacro:unless value="${is_master}">
@@ -161,7 +161,6 @@
         <axis xyz="0 1 0"/>
         <xacro:_frame id="truss_arm" rpy="0.0 ${offset} 0.0"/>
         <xacro:_limit/>
-        <mimic joint="${gripper_name}_joint" multiplier="1" offset="0"/>
       </joint>
 
       <!-- safety shield -->
@@ -188,7 +187,6 @@
           <axis xyz="0 1 0"/>
           <xacro:_frame id="safety_shield" rpy="0.0 ${offset} 0.0"/>
           <xacro:_limit/>
-          <mimic joint="${gripper_name}_joint" multiplier="1" offset="0"/>
         </joint>
       </xacro:if>
 
@@ -219,7 +217,6 @@
         <axis xyz="0 -1 0"/>
         <xacro:_frame id="finger_tip" rpy="0.0 ${-offset} 0.0"/>
         <xacro:_limit/>
-        <mimic joint="${gripper_name}_joint" multiplier="1" offset="0"/>
       </joint>
 
       <!-- flex finger -->
@@ -244,6 +241,22 @@
         <xacro:_frame id="flex_finger" rpy="0.0 0.0 0.0"/>
       </joint>
 
+      <!-- dummy link for detach/attach object in gazebo -->
+      <link name="${name}_dummy_link">
+        <inertial>
+          <mass value="0.001"/>
+          <inertia ixx="0.00001" ixy="0.0" ixz="0.0" iyy="0.00001" iyz="0.0" izz="0.00001"/>
+        </inertial>
+      </link>
+      <joint name="${name}_dummy_link_joint" type="revolute">
+        <parent link="${name}_moment_arm"/>
+        <child link = "${name}_dummy_link"/>
+        <axis xyz="0 1 0"/>
+        <origin xyz="${origin['finger_tip']['x']} ${origin['finger_tip']['y']} ${origin['finger_tip']['z']}" rpy="0.0 ${offset} 0.0"/>
+        <xacro:_limit/>
+      </joint>
+
+
     </xacro:macro>
 
     <xacro:finger name="${gripper_name}_finger_1" is_master="true"/>
@@ -262,6 +275,13 @@
                 <state_interface name="velocity"/>
                 <state_interface name="effort"/>
             </joint>
+
+            <joint name="${gripper_name}_mirror_joint">
+              <state_interface name="position"/>
+              <state_interface name="velocity"/>
+              <state_interface name="effort"/>
+            </joint>
+
             <joint name="${gripper_name}_finger_1_truss_arm_joint">
               <state_interface name="position"/>
             </joint>
@@ -285,6 +305,13 @@
                 <state_interface name="position"/>
               </joint>
             </xacro:if>
+
+            <joint name="${gripper_name}_finger_1_dummy_link_joint">
+              <state_interface name="position"/>
+            </joint>
+            <joint name="${gripper_name}_finger_2_dummy_link_joint">
+              <state_interface name="position"/>
+            </joint>
           </xacro:unless>
 
           <xacro:if value="${real_hardware}">
@@ -304,10 +331,90 @@
 
     </ros2_control>
 
+    <gazebo>
+      <!-- Connect moment arm to finger tip (via dummy_link) -->
+      <plugin filename="libgz-sim-detachable-joint-system.so" name="gz::sim::systems::DetachableJoint"> 
+          <parent_link>${gripper_name}_finger_1_finger_tip</parent_link>
+          <child_model>${model}</child_model>
+          <child_link>${gripper_name}_finger_1_dummy_link</child_link>
+
+          <attach_topic>loop/attach</attach_topic>
+          <detach_topic>loop/detach</detach_topic>
+          <output_topic>loop/state</output_topic>
+      </plugin>
+      <plugin filename="libgz-sim-detachable-joint-system.so" name="gz::sim::systems::DetachableJoint"> 
+          <parent_link>${gripper_name}_finger_2_finger_tip</parent_link>
+          <child_model>${model}</child_model>
+          <child_link>${gripper_name}_finger_2_dummy_link</child_link>
+
+          <attach_topic>loop/attach</attach_topic>
+          <detach_topic>loop/detach</detach_topic>
+          <output_topic>loop/state</output_topic>
+      </plugin>
+    </gazebo>
+
     <!-- si standalone alors mettre le plugin de ros2_control -->
     <xacro:unless value="${real_hardware}">
       <xacro:rg_gazebo prefix="${gripper_name}" origin="${origin}" limit="${limit}" standalone="${standalone}" safety_shield="${safety_shield}"/>
     </xacro:unless>
+
+     <gazebo reference="${prefix}gripper_bracket">
+    <selfCollide>false</selfCollide>
+    </gazebo>
+    <gazebo reference="${prefix}gripper_body">
+      <selfCollide>false</selfCollide>
+    </gazebo>
+    
+    <!-- Doigt 1 -->
+    <gazebo reference="${prefix}gripper_finger_1_origin">
+      <selfCollide>false</selfCollide>
+    </gazebo>
+    <gazebo reference="${prefix}gripper_finger_1_moment_arm">
+      <selfCollide>false</selfCollide>
+    </gazebo>
+    <gazebo reference="${prefix}gripper_finger_1_truss_arm">
+      <selfCollide>false</selfCollide>
+    </gazebo>
+    <gazebo reference="${prefix}gripper_finger_1_finger_tip">
+      <selfCollide>false</selfCollide>
+    </gazebo>
+    <gazebo reference="${prefix}gripper_finger_1_flex_finger">
+      <selfCollide>false</selfCollide>
+    </gazebo>
+    <gazebo reference="${prefix}gripper_finger_1_dummy_link">
+      <selfCollide>false</selfCollide>
+    </gazebo>
+    <xacro:if value="${safety_shield}">
+      <gazebo reference="${prefix}gripper_finger_1_safety_shield">
+          <selfCollide>false</selfCollide>
+      </gazebo>
+    </xacro:if>
+
+    <!-- Doigt 2 -->
+    <gazebo reference="${prefix}gripper_finger_2_origin">
+      <selfCollide>false</selfCollide>
+    </gazebo>
+    <gazebo reference="${prefix}gripper_finger_2_moment_arm">
+      <selfCollide>false</selfCollide>
+    </gazebo>
+    <gazebo reference="${prefix}gripper_finger_2_truss_arm">
+      <selfCollide>false</selfCollide>
+    </gazebo>
+    <gazebo reference="${prefix}gripper_finger_2_finger_tip">
+      <selfCollide>false</selfCollide>
+    </gazebo>
+    <gazebo reference="${prefix}gripper_finger_2_flex_finger">
+      <selfCollide>false</selfCollide>
+    </gazebo>
+    <gazebo reference="${prefix}gripper_finger_2_dummy_link">
+      <selfCollide>false</selfCollide>
+    </gazebo>
+    <xacro:if value="${safety_shield}">
+      <gazebo reference="${prefix}gripper_finger_2_safety_shield">
+          <selfCollide>false</selfCollide>
+      </gazebo>
+    </xacro:if>
+    
 
   </xacro:macro>
 

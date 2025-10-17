@@ -22,7 +22,7 @@ rg2_v1_gripper_controller:
     joint: rg2_gripper_joint
     max_effort: 0.0
 
-rg6_gripper_controller:
+rg6_v1_gripper_controller:
   ros__parameters:
     action_monitor_rate: 500.0
     allow_stalling: false
