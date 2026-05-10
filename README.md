@@ -54,6 +54,19 @@ To test the gripper standalone in simulation (with Gazebo), run:
 ros2 launch onrobot_description test_gazebo.launch.py
 ```
 
+### IsaacSim USD Scene File Generation
+In onrobot_description/USD We have a USD file that can be used in IsaacSim (It was generated using IsaacSim 4.5 but tested on IsaacSim 6.0 with no issues)
+To regenerate the the USD file:
+1. Generate the urdf file with the absolute paths
+```
+cd onrobot_description
+./USD/urdf_generator.sh
+```
+2. Import the generated onrobot_rg.urdf using IsaacSim 4.5 (We ran into issues when importing using IsaacSim 6.0. However the generated file run after couple of manual adjustments in IsaacSim 6)
+3. Open the generated USD file using IsaacSim and go over all the joints and set the mimic joints properties below:
+	- target (Reference joint) -> gripper_joint
+	- natural frequency and damping -> 0 (enforce hard contraint)
+
 ### Real Hardware
 
 To use the real gripper:

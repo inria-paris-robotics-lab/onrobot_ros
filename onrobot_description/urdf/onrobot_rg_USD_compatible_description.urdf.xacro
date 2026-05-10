@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="test_onrobot_rg">
+
+<xacro:arg name="onrobot_description_filepath" default="$(env PWD)/onrobot_description"/>
+
+  <xacro:include filename="$(arg onrobot_description_filepath)/urdf/onrobot_rg_USD_base_macro.urdf.xacro"/>
+
+  <link name="base_link"/>
+  
+  <xacro:onrobot_rg
+    prefix=""
+    parent="base_link">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </xacro:onrobot_rg>
+</robot>
