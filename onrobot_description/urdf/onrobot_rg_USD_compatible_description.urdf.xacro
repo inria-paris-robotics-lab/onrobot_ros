@@ -3,13 +3,16 @@
 
 <xacro:arg name="onrobot_description_filepath" default="$(env PWD)/onrobot_description"/>
 
+<xacro:arg name="gripper_model" default="rg2_v1"/>
+
   <xacro:include filename="$(arg onrobot_description_filepath)/urdf/onrobot_rg_USD_base_macro.urdf.xacro"/>
 
   <link name="base_link"/>
   
   <xacro:onrobot_rg
     prefix=""
-    parent="base_link">
+    parent="base_link"
+    model="$(arg gripper_model)">
     <origin xyz="0 0 0" rpy="0 0 0"/>
   </xacro:onrobot_rg>
 </robot>

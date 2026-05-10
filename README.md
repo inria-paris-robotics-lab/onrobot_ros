@@ -60,12 +60,18 @@ To regenerate the the USD file:
 1. Generate the urdf file with the absolute paths
 ```
 cd onrobot_description
-./USD/urdf_generator.sh
+./USD/urdf_generator.sh rg2_v1
+```
+for RG6
+```
+./USD/urdf_generator.sh rg6_v1
 ```
 2. Import the generated onrobot_rg.urdf using IsaacSim 4.5 (We ran into issues when importing using IsaacSim 6.0. However the generated file run after couple of manual adjustments in IsaacSim 6)
 3. Open the generated USD file using IsaacSim and go over all the joints and set the mimic joints properties below:
 	- target (Reference joint) -> gripper_joint
 	- natural frequency and damping -> 0 (enforce hard contraint)
+	- all joints limits should be (0, 69.9)
+	- ensure the parameters for gripper_joint is sufficient for your simulation (e.g. stiffness currently is 0.99 and max force is 10)
 
 ### Real Hardware
 
